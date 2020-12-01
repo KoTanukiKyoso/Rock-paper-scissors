@@ -1,0 +1,47 @@
+$mainColor: #3259b3;//62b943
+$data: (
+        "main": $mainColor
+);
+$types: "color", "border", "background";
+
+@each $type in $types {
+  @each $key,
+  $val in $data {
+    .my-#{$type}-#{$key} {
+      #{$type}: $val;
+    }
+
+    .my-#{$type}-#{$key}-d {
+      #{$type}: darken($val, 12.5%);
+    }
+
+    .my-#{$type}-#{$key}-dd {
+      #{$type}: darken($val, 25%);
+    }
+
+    .my-#{$type}-#{$key}-l {
+      #{$type}: lighten($val, 25%);
+    }
+
+    .my-#{$type}-#{$key}-ll {
+      #{$type}: lighten($val, 45%);
+    }
+  }
+}
+
+//各種グラデーション
+.orange-gradation {
+  background: linear-gradient(to right, #fa709a 0%, #fee140 100%);
+}
+
+.blue-gradation {
+  background: linear-gradient(to right, #9a70fa 0%, #40e1fe 100%);
+}
+
+.purple-gradation {
+  background: linear-gradient(to right, #7104cf 0%, #fAa7dB 100%);
+}
+
+.sky-gradation {
+  background: linear-gradient(to right, #209cee 0%, #40e1fe 100%);
+}
