@@ -1,5 +1,5 @@
 <template>
-  <v-footer color="primary" class="white--text rounded-t-xl">
+  <v-footer color="primary" class="white--text">
     <v-col class="pa-1 text-center">
       <h3 class="d-block ma-0 accent--text">ジャンケン Online</h3>
 
