@@ -1,0 +1,87 @@
+.my-color-main {
+  color: #3259b3;
+}
+
+.my-color-main-d {
+  color: #244081;
+}
+
+.my-color-main-dd {
+  color: #16274f;
+}
+
+.my-color-main-l {
+  color: #87a1dd;
+}
+
+.my-color-main-ll {
+  color: #d7e0f4;
+}
+
+.my-border-main {
+  border: #3259b3;
+}
+
+.my-border-main-d {
+  border: #244081;
+}
+
+.my-border-main-dd {
+  border: #16274f;
+}
+
+.my-border-main-l {
+  border: #87a1dd;
+}
+
+.my-border-main-ll {
+  border: #d7e0f4;
+}
+
+.my-background-main {
+  background: #3259b3;
+}
+
+.my-background-main-d {
+  background: #244081;
+}
+
+.my-background-main-dd {
+  background: #16274f;
+}
+
+.my-background-main-l {
+  background: #87a1dd;
+}
+
+.my-background-main-ll {
+  background: #d7e0f4;
+}
+
+.orange-gradation {
+  background: linear-gradient(to right, #fa709a 0%, #fee140 100%);
+}
+
+.blue-gradation {
+  background: linear-gradient(to right, #9a70fa 0%, #40e1fe 100%);
+}
+
+.purple-gradation {
+  background: linear-gradient(to right, #7104cf 0%, #fAa7dB 100%);
+}
+
+.sky-gradation {
+  background: linear-gradient(to right, #209cee 0%, #40e1fe 100%);
+}
+
+body {
+  padding: 0;
+  margin: 0;
+}
+
+.page {
+  margin: 0 auto;
+  min-height: calc(100vh - 50px);
+}
+
+/*# sourceMappingURL=common.css.map */
