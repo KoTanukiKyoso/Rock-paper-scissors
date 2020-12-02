@@ -1,6 +1,7 @@
 <template>
-  <div class="footer my-background-main">
+  <v-footer class="footer my-background-main">
     <h3>ジャンケン Online</h3>
+    <v-divider></v-divider>
     <ul>
       <li>
         <router-link to="/about">ABOUT</router-link>
@@ -11,9 +12,13 @@
       |
       <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank"
              rel="noopener">What's "じゃんけん"</a></li>
+      |
+      <li>
+        <router-link to="/about">利用規約</router-link>
+      </li>
     </ul>
     © 2020 たぬき Inc.
-  </div>
+  </v-footer>
 </template>
 
 <script>
@@ -41,9 +46,9 @@ li {
 
 .footer {
   color: white;
-  width: 100%;
+  width: calc(100% - 20px);
   padding: 10px;
-  position: fixed;
+  position: absolute;
   bottom: 0;
   left: 0;
 }

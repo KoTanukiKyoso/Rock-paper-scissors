@@ -22,9 +22,9 @@
 </style>
 
 <template>
-  <div id="app">
+  <div id="app" class="page">
+    <Header msg="ジャンケン Online"/>
     <div id="nav">
-<!--      page link-->
       <router-link to="/">Home</router-link>
     </div>
     <!--ここにページ毎コンテンツが入る-->
@@ -35,7 +35,12 @@
 
 <script>
 import Footer from "@/views/Footer";
+import Header from "@/views/Header";
+
 export default {
-  components: {Footer}
+  components: {
+    Footer,
+    Header
+  }
 }
 </script>

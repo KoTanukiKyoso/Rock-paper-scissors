@@ -1,6 +1,14 @@
 @import "define/colors";
 
-
-h1{
+body{
+  padding: 0;
+  margin: 0;
+}
+h1 {
   color: $mainColor;
+}
+
+.page {
+  margin: 0 auto;
+  min-height: calc(100vh - 50px);
 }
