@@ -2,7 +2,7 @@
   <v-main class="primary lighten-1">
     <v-container class="about d-flex flex-column pa-0" style="align-items: stretch; height: 100%;">
       <div>
-        <v-row class="py-2 px-4 white--text">
+        <v-row class="py-1 px-4 white--text">
           <v-col cols="4">
             <router-link to="/" class="white--text">
               <Fa :icon="faArrowLeft" fw size="lg"/>
@@ -15,12 +15,11 @@
         </v-row>
       </div>
       <div class="rounded-t-xl white pa-6 elevation-10 flex-fill">
-        <h1 class="font-weight-bold mb-0">
-          <Fa :icon="faHandRock" fw size="lg" class="secondary--text"/>
+        <h2 class="font-weight-bold mb-0 primary--text ">
           本システムについて
-        </h1>
+        </h2>
         <v-divider></v-divider>
-        <h2 class="mb-2 primary--text">ABOUT</h2>
+        <h2 class="mb-2 secondary--text font-weight-regular">ABOUT</h2>
         <p>
           オンラインでじゃんけん対戦ができる画期的なサービスです<br>
           ，，，多分
