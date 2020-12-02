@@ -1,11 +1,13 @@
-const path = require('path')
 module.exports = {
-    pluginOptions: {
-        'style-resources-loader': {
-            preProcessor: 'sass',
-            patterns: [
-                path.resolve(__dirname, './src/style/sass/*.scss'),
-            ]
-        }
+  "pluginOptions": {
+    "style-resources-loader": {
+      "preProcessor": "sass",
+      "patterns": [
+        "C:\\Users\\code_\\PhpstormProjects\\janken\\src\\style\\sass\\*.scss"
+      ]
     }
+  },
+  "transpileDependencies": [
+    "vuetify"
+  ]
 }
