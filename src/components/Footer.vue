@@ -31,7 +31,7 @@ export default {
       {
         text: "What's \"じゃんけん\"",
         type: "1",
-        link: ""
+        link: "/whats"
       },
     ],
   }),

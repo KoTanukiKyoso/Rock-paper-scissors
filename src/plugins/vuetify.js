@@ -32,7 +32,7 @@ export default new Vuetify({
                 // info: "#2196f3",
                 // success: "#4caf50"
 
-                primary: "#e91e63",
+                primary: "#f44336",
                 secondary: "#ff9800",
                 accent: "#000000",
                 error: "#f44336",
