@@ -26,12 +26,17 @@ export default {
       {
         text: "Getting Started",
         type: "1",
-        link: ""
+        link: "/getstart"
       },
       {
         text: "What's \"じゃんけん\"",
         type: "1",
         link: "/whats"
+      },
+      {
+        text: "利用規約",
+        type: "1",
+        link: "/terms"
       },
     ],
   }),
