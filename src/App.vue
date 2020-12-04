@@ -31,6 +31,74 @@
   opacity: 0;
   transform: translateX(-400px);
 }
+
+
+/*縦方向*/
+.downup-leave-active,
+.downup-enter-active {
+  /* transition: opacity 1s; */
+  transition: all 0.5s;
+}
+
+.downup-enter {
+  opacity: 0;
+  transform: translateY(-50%);
+}
+
+.downup-enter-to {
+  opacity: 1;
+}
+
+.downup-leave {
+  opacity: 1;
+}
+
+.downup-leave-to {
+  opacity: 0;
+  transform: translateY(-50%);
+}
+
+
+.updown-leave-active,
+.updown-enter-active {
+  transition: all 0.5s;
+}
+
+.updown-enter {
+  opacity: 0;
+  transform: translateY(+50%);
+}
+
+.updown-enter-to {
+  opacity: 1;
+}
+
+.updown-leave {
+  opacity: 1;
+}
+
+.updown-leave-to {
+  opacity: 0;
+  transform: translateY(+50%);
+}
+
+
+.downup_length-leave-active,
+.downup_length-enter-active {
+  /* transition: opacity 1s; */
+  transition: all 0.7s;
+}
+
+.downup_length-enter,
+.downup_length-leave-to {
+  opacity: 0;
+  transform: translateY(-50px);
+}
+
+.downup_length-enter-to,
+.downup_length-leave {
+  opacity: 1;
+}
 </style>
 <template>
   <v-app>
@@ -39,15 +107,16 @@
     <transition name="fromLeft" mode="out-in">
       <router-view/>
     </transition>
-
     <div elevation="10" class="elevation-5">
       <Footer/>
     </div>
+
+    <myAlert/>
   </v-app>
 </template>
 
 <script>
-
+import myAlert from "@/components/parts/Alert";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 
@@ -56,11 +125,14 @@ export default {
 
   components: {
     Header,
-    Footer
+    Footer,
+    myAlert
   },
 
   data: () => ({
+    messages: []
     //
   }),
+  methods: {}
 };
 </script>

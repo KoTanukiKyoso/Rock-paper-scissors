@@ -43,7 +43,7 @@ export default {
   },
   props: {
     contents: Array,
-    title: Array
+    title: Object
   },
   data: () => ({
     faHandRock,
