@@ -34,10 +34,10 @@
             <v-card-text>
               <v-container>
                 <v-row>
-                  <v-col cols="6" class="py-1">
+                  <v-col cols=12 class="py-1 col-sm-6">
                     <v-text-field label="ルーム名*" required prepend-inner-icon="mdi-home"></v-text-field>
                   </v-col>
-                  <v-col cols="4" class="py-1">
+                  <v-col cols=6 class="py-1 col-sm-4">
                     <v-select
                         :items="capacity"
                         label="募集人数*"
@@ -45,18 +45,36 @@
                     ></v-select>
                   </v-col>
 
-                  <v-col cols="12" class="py-1">
-                    <div>
+                  <v-row cols="12">
+                    <div class="py-0 mx-4 mb-0 d-inline-block">
                       <v-checkbox v-model="roomSetting.lock" label="鍵をかける" prepend-icon="mdi-lock"></v-checkbox>
                     </div>
-                    <div v-if="roomSetting.lock">
+                    <v-col v-if="roomSetting.lock" cols="12" class="py-0 mt-0 col-sm-6">
                       <v-text-field label="Password*" type="password" required></v-text-field>
-                    </div>
-                  </v-col>
+                    </v-col>
+                  </v-row>
 
                   <v-col cols="12" class="py-1">
-                    <v-text-field label="ルーム説明"></v-text-field>
+                    <v-textarea filled rows="2" label="ルーム説明" auto-grow></v-textarea>
                   </v-col>
+
+                    <v-expansion-panels flat >
+                      <v-expansion-panel class="">
+                        <v-expansion-panel-header ripple class="pb-0">ルール設定</v-expansion-panel-header>
+                        <v-expansion-panel-content>
+                          <v-divider></v-divider>
+                          <v-row cols="12">
+                            <div class="py-0 mx-4 mb-0 d-inline-block">
+                              <v-checkbox v-model="roomSetting.lock" label="鍵をかける" prepend-icon="mdi-lock"></v-checkbox>
+                            </div>
+                            <v-col v-if="roomSetting.lock" cols="12" class="py-0 mt-0 col-sm-6">
+                              <v-text-field label="Password*" type="password" required></v-text-field>
+                            </v-col>
+                          </v-row>
+                        </v-expansion-panel-content>
+                      </v-expansion-panel>
+                    </v-expansion-panels>
+
                 </v-row>
               </v-container>
               <small>*必須入力項目</small>
