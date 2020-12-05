@@ -39,10 +39,17 @@
                   </v-col>
                   <v-col cols=6 class="py-1 col-sm-4">
                     <v-select
-                        :items="capacity"
+                        :items="capacity(1,9, 1)"
                         label="募集人数*"
                         required prepend-inner-icon="mdi-account-multiple"
                     ></v-select>
+                  </v-col>
+
+                  <v-col cols=6 class="py-1 col-sm-4">
+                    <v-select
+                        :items="capacity(1,10, 1)"
+                        label="対戦回数*"
+                        required prepend-inner-icon="mdi-fencing"></v-select>
                   </v-col>
 
                   <v-row cols="12">
@@ -58,22 +65,22 @@
                     <v-textarea filled rows="2" label="ルーム説明" auto-grow></v-textarea>
                   </v-col>
 
-                    <v-expansion-panels flat >
-                      <v-expansion-panel class="">
-                        <v-expansion-panel-header ripple class="pb-0">ルール設定</v-expansion-panel-header>
-                        <v-expansion-panel-content>
-                          <v-divider></v-divider>
-                          <v-row cols="12">
-                            <div class="py-0 mx-4 mb-0 d-inline-block">
-                              <v-checkbox v-model="roomSetting.lock" label="鍵をかける" prepend-icon="mdi-lock"></v-checkbox>
-                            </div>
-                            <v-col v-if="roomSetting.lock" cols="12" class="py-0 mt-0 col-sm-6">
-                              <v-text-field label="Password*" type="password" required></v-text-field>
-                            </v-col>
-                          </v-row>
-                        </v-expansion-panel-content>
-                      </v-expansion-panel>
-                    </v-expansion-panels>
+                  <v-expansion-panels flat>
+                    <v-expansion-panel class="">
+                      <v-expansion-panel-header ripple class="pb-0">ルール詳細設定</v-expansion-panel-header>
+                      <v-expansion-panel-content>
+                        <v-divider></v-divider>
+                        <v-row cols="12">
+                          <div class="py-0 mx-4 mb-0 d-inline-block">
+                            <v-checkbox v-model="roomSetting.lock" label="鍵をかける" prepend-icon="mdi-lock"></v-checkbox>
+                          </div>
+                          <v-col v-if="roomSetting.lock" cols="12" class="py-0 mt-0 col-sm-6">
+                            <v-text-field label="Password*" type="password" required></v-text-field>
+                          </v-col>
+                        </v-row>
+                      </v-expansion-panel-content>
+                    </v-expansion-panel>
+                  </v-expansion-panels>
 
                 </v-row>
               </v-container>
@@ -97,6 +104,7 @@ import Fa from 'vue-fa'
 import {faHandPaper, faHandRock, faHandPeace} from '@fortawesome/free-solid-svg-icons'
 import CardButton from "@/components/parts/cardButton";
 
+// let
 export default {
   name: 'Top',
   components: {
@@ -132,18 +140,18 @@ export default {
         return;
       }
       this.dialog = true;
-    }
-
+    },
   },
   computed: {
     capacity: function () {
-      let ar = [];
-      for (let i = 1; i < 10; i++) {
-        ar.push(i);
+      return function (s, e, p = 1) {
+        let ar = [];
+        for (let i = s; i <= e; i += p) {
+          ar.push(i);
+        }
+        return ar;
       }
-      console.log(ar);
-      return ar;
-    }
+    },
   }
 }
 </script>
