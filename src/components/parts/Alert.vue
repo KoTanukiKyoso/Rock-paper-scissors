@@ -1,6 +1,6 @@
 <style scoped>
 .alert {
-  z-index: 99;
+  z-index: 202;
   position: fixed;
   top: 20px;
   margin: 5px auto;
@@ -29,7 +29,7 @@ import Vue from 'vue'
 export default {
   name: "myAlert",
   data: () => ({
-    risks: ["success","info","warning","error"],
+    risks: ["success", "info", "warning", "error"],
     alert: false,
     showing: false,
     mMessages: Vue.prototype.store.messages
@@ -54,6 +54,15 @@ export default {
       if (this.mMessages.length > 0) {
         this.alert = true;
         this.showing = true;
+        if (!this.mMessages[0].dismissible) {
+          this.mMessages[0].dismissible = false;
+        }
+        if (!this.mMessages[0].time) {
+          this.mMessages[0].time = 2.5;
+        }
+        if (!this.mMessages[0].risk) {
+          this.mMessages[0].risk = 3;
+        }
         console.log(this.mMessages[0].text);
         if (this.mMessages[0].dismissible == 0) {
           setTimeout(this.nextMessage, this.mMessages[0].time * 1000);

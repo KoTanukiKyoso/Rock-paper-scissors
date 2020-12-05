@@ -111,7 +111,7 @@
       <Footer/>
     </div>
 
-    <myAlert/>
+    <myAlert />
   </v-app>
 </template>
 
