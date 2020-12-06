@@ -9,6 +9,20 @@
           </router-link>
         </v-btn>
       </div>
+      <v-row>
+        <v-col v-for="(room, key) of rooms" :key="key" cols="6" class="col-md-4">
+          <v-card>
+            <v-card-title>{{ room.roomName }}</v-card-title>
+            <v-card-text v-if="room.roomSummary">{{ room.roomSummary }}</v-card-text>
+            <v-card-text v-else>詳細は登録されておりません</v-card-text>
+            <v-card-actions class="pa-3">
+              <v-icon class="mx-2" style="color: yellow;">fas fa-hand-rock</v-icon>
+              <v-icon class="mx-2" :class="{true: 'primaryText'}">fas fa-hand-peace</v-icon>
+              <v-icon class="mx-2">fas fa-hand-paper</v-icon>
+            </v-card-actions>
+          </v-card>
+        </v-col>
+      </v-row>
 
     </v-container>
   </v-main>
