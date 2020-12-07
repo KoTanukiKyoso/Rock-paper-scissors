@@ -83,6 +83,7 @@ export default {
     listenRoom() {
       let self = this;
       this.db.collection("rooms").where("recruitment", "==", true)
+          .orderBy("timestamp","desc").limit(50)
           .onSnapshot(function (querySnapshot) {
             let rooms = {};
             querySnapshot.forEach(function (doc) {

@@ -6,7 +6,10 @@
           <Fa :icon="faArrowLeft" fw size="lg"/>
         </router-link>
         <v-spacer></v-spacer>
-        <v-btn text x-large @click="exitRoom" color="primary" class="font-weight-bold">退出する</v-btn>
+        <v-btn v-if="isOwner"
+               text x-large @click="closeRoom" color="primary" class="font-weight-bold">部屋を削除
+        </v-btn>
+        <v-btn v-else text x-large @click="exitRoom" color="primary" class="font-weight-bold">退出する</v-btn>
       </v-row>
       <v-row>
         <v-col cols="4">
@@ -36,12 +39,16 @@ export default {
     db: null,
     roomData: {},
     roomId: "",
+    isOwner: false,
   }),
   created: function () {
     this.db = this.store.firebase.firestore();
     this.intoRoom();
   },
   methods: {
+    async closeRoom() {
+
+    },
     async intoRoom() {
       let self = this;
       let gets = this.GetURLGet();
@@ -66,7 +73,7 @@ export default {
             return;
           });
     },
-    async checkRoom(){
+    async checkRoom() {
       if (!this.roomData) {
         this.store.messages.push(
             {text: "部屋が存在しないか削除済みです．"}
@@ -75,11 +82,40 @@ export default {
         return;
       }
 
-      //入室確認
+      //既入室確認
+      if (this.roomData.owner == this.store.user.uid) {
+        this.isOwner = true;
+        return;
+      }
+      if (this.roomData.children.includes(this.store.user.uid)) {
+        return;
+      }
 
       //入室してない場合空きがあって鍵部屋でなければ入室
+      if (this.roomData.lock || this.roomData.children.length >= this.roomData.numOfChildren) {
+        this.store.messages.push(
+            {text: "この部屋は既に一杯です．"}
+        );
+        await this.$router.push("/rooms");
+        return;
+      }
 
-      //それ以外は退出 エラー表示
+      //入室処理
+      let self = this;
+      //登録
+      let res = this.db.doc('rooms/' + this.roomId).update({
+        children: self.store.firebase.firestore.FieldValue.arrayUnion(self.store.user.uid),
+      }).then(function () {
+        return true;
+      }).catch(function (err) {
+        console.log(err);
+        return false;
+      });
+      if (!res) {
+        this.store.messages.push({text: "入室に失敗しました．通信が混雑している可能性があります．"});
+        await this.$router.push("/battleRoom?id=" + this.roomId);
+        return;
+      }
     },
     GetURLGet() {
       let url = location.href;
