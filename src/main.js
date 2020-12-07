@@ -27,7 +27,7 @@ firebase.analytics();
 
 firebase.auth().onAuthStateChanged(user => {
     if (user) {
-        // console.log(user.uid);
+        console.log(user.uid);
         Vue.prototype.store.user = user;
         let db = firebase.firestore();
         //ユーザ登録 最終ログイン更新
@@ -54,11 +54,9 @@ firebase.auth().onAuthStateChanged(user => {
     }
 });
 
-Vue.prototype.store = {
-    user: null,
-    firebase: firebase,
-    messages: []
-};
+Vue.prototype.store.user = null;
+Vue.prototype.store.firebase = firebase;
+Vue.prototype.store.messages = [];
 
 Vue.config.productionTip = false
 

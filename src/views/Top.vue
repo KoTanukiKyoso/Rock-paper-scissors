@@ -79,6 +79,7 @@
                           <v-col cols="12" class="py-0 subtitle-1">使用可能手</v-col>
                           <v-col v-for="(hand, key) of roomSetting.hands" :key="key" cols="4" class="py-0 mb-0 ">
                             <v-checkbox :label="hand.name" v-model="hand.checked"
+                                        :style="hand.checked ? {color: store.colors.primary} : {color: 'rgba(0,0,0,0.4)'}"
                                         :prepend-icon="hand.icon"></v-checkbox>
                           </v-col>
                           <v-col cols="12" class="py-0">
@@ -130,6 +131,9 @@ export default {
       faHandPeace,
       time: 0,
       roomSettingBase: {
+        results: [],
+        children: [],
+        chat: [],
         recruitment: true,
         timestamp: null,
         owner: null,
@@ -154,7 +158,7 @@ export default {
           paper: {
             name: "パー",
             checked: true,
-            icon: "mdi-hand-right"
+            icon: "fa-hand-paper"
           },
         },
       },
@@ -194,11 +198,15 @@ export default {
         }
       }
       if (!setting.roomName) {
-        this.store.messages.push(
-            {
-              text: "ルーム名を入力してください．"
-            }
-        );
+        this.store.messages.push({
+          text: "ルーム名を入力してください．"
+        });
+        return;
+      }
+      if (setting.roomName.length > 24) {
+        this.store.messages.push({
+          text: "ルーム名は24文字以内で入力してください．"
+        });
         return;
       }
       let n = 0;
