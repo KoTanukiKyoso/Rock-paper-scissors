@@ -14,8 +14,19 @@
       </div>
       <v-row>
         <v-col v-for="(room, key) of rooms" :key="key" cols="6" class="col-md-4">
-          <v-card @click="intoRoom(room, key)" :style="{borderTop: 'solid 4px ' + store.colors.primary}">
-            <v-card-title class="pb-1">
+          <v-card @click="intoRoom(room, key)" style="border-top-width: 4px; border-top-style: solid;"
+                  :style="
+                      room.owner == store.user.uid ? {borderTopColor: store.colors.secondary} :
+                      room.children.includes(store.user.uid) ? {borderTopColor: store.colors.info} :
+                      room.children.length >= room.numOfChildren ? {borderTopColor: store.colors.error} :
+                      {borderTopColor: store.colors.success}
+                      ">
+            <div style="text-align: end;" class="pr-2 font-weight-bold subtitle-2 primary--text ">
+              <span v-if="room.owner == store.user.uid">オーナー</span>
+              <span v-else-if="room.children.includes(store.user.uid)">参加中</span>
+              <span v-else style="opacity: 0;">a</span>
+            </div>
+            <v-card-title class="pb-1 pt-0">
               <v-icon v-if="room.lock">mdi-lock</v-icon>
               {{ room.roomName }}
             </v-card-title>

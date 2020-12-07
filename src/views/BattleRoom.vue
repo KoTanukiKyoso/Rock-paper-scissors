@@ -7,7 +7,7 @@
         </router-link>
         <v-spacer></v-spacer>
         <v-btn v-if="isOwner"
-               text x-large @click="closeRoom" color="primary" class="font-weight-bold">部屋を削除
+               text x-large @click="closeRoom" color="primary" class="font-weight-bold">部屋を解散
         </v-btn>
         <v-btn v-else text x-large @click="exitRoom" color="primary" class="font-weight-bold">退出する</v-btn>
       </v-row>
@@ -40,15 +40,13 @@ export default {
     roomData: {},
     roomId: "",
     isOwner: false,
+    onetime: true
   }),
   created: function () {
     this.db = this.store.firebase.firestore();
     this.intoRoom();
   },
   methods: {
-    async closeRoom() {
-
-    },
     async intoRoom() {
       let self = this;
       let gets = this.GetURLGet();
@@ -63,7 +61,10 @@ export default {
       this.db.collection("rooms").doc(gets.id)
           .onSnapshot(function (doc) {
             self.roomData = doc.data();
-            self.checkRoom();
+            if (self.onetime) {
+              self.onetime = false;
+              self.checkRoom();
+            }
           }, async function (error) {
             console.log(error);
             this.store.messages.push(
@@ -139,8 +140,91 @@ export default {
       }
       return result;
     },
-    exitRoom() {
-
+    async closeRoom() {
+      if (this.roomData.owner != this.store.user.uid) {
+        return;
+      }
+      let rr = await this.$swal(
+          {
+            title: "本当に部屋を解散しますか？",
+            html: "参加者，チャットデータは全て削除されます．過去の対戦結果は削除されません．",
+            icon: "question",//"success", "error", "warning", "info" or "question"
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "解散する"
+          }
+      ).then((result) => {
+        if (result.value) {
+          return true;
+        } else {
+          return false;
+        }
+      });
+      if (!rr) {
+        return;
+      }
+      let res = this.db.doc('rooms/' + this.roomId).delete().then(function () {
+        return true;
+      }).catch(function (err) {
+        console.log(err);
+        return false;
+      });
+      if (res) {
+        this.store.messages.push(
+            {text: "部屋を解散しました．"}
+        );
+        // await this.$router.push("/rooms");
+        return;
+      } else {
+        this.store.messages.push(
+            {text: "部屋の解散に失敗しました．"}
+        );
+        return;
+      }
+    },
+    async exitRoom() {
+      let rr = await this.$swal(
+          {
+            title: "本当に部屋を退出しますか？",
+            html: "一度退出すると再度入室できない可能性があります．",
+            icon: "question",//"success", "error", "warning", "info" or "question"
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: "退出する"
+          }
+      ).then((result) => {
+        if (result.value) {
+          return true;
+        } else {
+          return false;
+        }
+      });
+      if (!rr) {
+        return;
+      }
+      let self = this;
+      let res = this.db.doc('rooms/' + this.roomId).update({
+        children: self.store.firebase.firestore.FieldValue.arrayRemove(self.store.user.uid),
+      }).then(function () {
+        return true;
+      }).catch(function (err) {
+        console.log(err);
+        return false;
+      });
+      if (res) {
+        this.store.messages.push(
+            {text: "部屋を退出しました．"}
+        );
+        await this.$router.push("/rooms");
+        return;
+      } else {
+        this.store.messages.push(
+            {text: "部屋の退出に失敗しました．"}
+        );
+        return;
+      }
     }
   }
 }

@@ -7,6 +7,7 @@ import firebase from 'firebase/app'
 import 'firebase/analytics';
 import 'firebase/auth';
 import 'firebase/firestore'
+import VueSweetalert2 from 'vue-sweetalert2';
 
 import "./components/parts/vDiv";
 import "./components/parts/Alert";
@@ -53,6 +54,8 @@ firebase.auth().onAuthStateChanged(user => {
         });
     }
 });
+
+Vue.use(VueSweetalert2);
 
 Vue.prototype.store.user = null;
 Vue.prototype.store.firebase = firebase;
