@@ -131,9 +131,9 @@ export default {
       faHandPeace,
       time: 0,
       roomSettingBase: {
+        now: 0,
         results: [],
         children: [],
-        chat: [],
         recruitment: true,
         timestamp: null,
         owner: null,
@@ -245,7 +245,8 @@ export default {
       });
       this.dialog = false;
       this.roomSetting = {...this.roomSettingBase};
-      await this.$router.push("/rooms");
+      // console.log(res.ref);
+      this.$router.push("/battleRoom?id=" + res.ref.id);
     }
   },
   computed: {

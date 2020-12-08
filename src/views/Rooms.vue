@@ -24,6 +24,7 @@
             <div style="text-align: end;" class="pr-2 font-weight-bold subtitle-2 primary--text ">
               <span v-if="room.owner == store.user.uid">オーナー</span>
               <span v-else-if="room.children.includes(store.user.uid)">参加中</span>
+              <span v-else-if="room.children.length >= room.numOfChildren">参加不可</span>
               <span v-else style="opacity: 0;">a</span>
             </div>
             <v-card-title class="pb-1 pt-0">
@@ -68,6 +69,25 @@
         </v-col>
       </v-row>
 
+      <v-dialog v-model="dialog" max-width="400px">
+        <v-card>
+          <v-card-title>
+            <span class="headline">パスワードを入力してください</span>
+          </v-card-title>
+          <v-card-actions class="px-5">
+            <v-text-field v-model="password"
+                          :append-icon="show1 ? 'mdi-eye' : 'mdi-eye-off'" :rules="[rules.required]"
+                          :type="show1 ? 'text' : 'password'" label="パスワード" hint="空欄にはできません" counter
+                          @click:append="show1 = !show1" class="mx-auto"
+            ></v-text-field>
+          </v-card-actions>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="error" class="font-weight-bold" text @click="dialog = false">キャンセル</v-btn>
+            <v-btn color="blue darken-1" class="font-weight-bold" text @click="checkPass()">完了</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-container>
   </v-main>
 </template>
@@ -84,24 +104,33 @@ export default {
   data: () => ({
     faArrowLeft,
     rooms: {},
-    db: null
+    db: null,
+    passwordCheck: false,
+    dialog: false,
+    password: "",
+    show1: false,
+    selectedRoom: null,
+    rules: {
+      required: value => !!value || 'Required.',
+      // min: v => v.length >= 8 || 'Min 8 characters',
+      // emailMatch: () => ('The email and password you entered don\'t match'),
+    },
   }),
   created() {
     this.db = this.store.firebase.firestore();
+    this.password = "";
     this.listenRoom();
   },
   methods: {
     listenRoom() {
       let self = this;
       this.db.collection("rooms").where("recruitment", "==", true)
-          .orderBy("timestamp","desc").limit(50)
+          .orderBy("timestamp", "desc").limit(50)
           .onSnapshot(function (querySnapshot) {
             let rooms = {};
             querySnapshot.forEach(function (doc) {
-              // console.log(doc);
               rooms[doc.id] = doc.data();
             });
-            console.log(rooms);
             self.rooms = rooms;
           });
     },
@@ -125,6 +154,14 @@ export default {
         return;
       }
 
+      //パスワードチェック
+      if (room.lock) {
+        this.selectedRoom = room;
+        this.selectedRoom.key = key;
+        this.dialog = true;
+        return;
+      }
+
       let self = this;
       //登録
       let res = this.db.doc('rooms/' + key).update({
@@ -141,7 +178,47 @@ export default {
       } else {
         this.store.messages.push({text: "入室に失敗しました．通信が混雑している可能性があります．"});
       }
+    },
+    async checkPass() {
+      if (this.password === "") {
+        return;
+      }
 
+      let room = this.selectedRoom;
+      let key = this.selectedRoom.key;
+
+      //人数チェック
+      if (room.children.length >= room.numOfChildren) {
+        this.store.messages.push(
+            {text: "その部屋は既に人数がいっぱいです．"}
+        );
+        return;
+      }
+
+      //パスワードチェック
+      if (this.password != room.password) {
+        this.store.messages.push(
+            {text: "パスワードが違います．"}
+        );
+        return;
+      }
+
+      let self = this;
+      //登録
+      let res = this.db.doc('rooms/' + key).update({
+        children: self.store.firebase.firestore.FieldValue.arrayUnion(self.store.user.uid),
+      }).then(function () {
+        return true;
+      }).catch(function (err) {
+        console.log(err);
+        return false;
+      });
+      if (res) {
+        await this.$router.push("/battleRoom?id=" + key);
+        return;
+      } else {
+        this.store.messages.push({text: "入室に失敗しました．通信が混雑している可能性があります．"});
+      }
     },
     timestampToTime(timestamp) {
       const date = new Date(timestamp * 1000);
