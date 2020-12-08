@@ -45,9 +45,40 @@
         </v-row>
       </div>
       <div v-else>
-
+        <v-row justify="center">
+          <v-col cols="3"></v-col>
+          <v-col cols="6">
+            <h2>親の手</h2>
+          </v-col>
+          <v-col cols="3"></v-col>
+          <transition>
+            <template v-if="roomData.results && roomData.results[roomData.now] && roomData.results[roomData.now][roomData.owner]
+          && roomData.results[roomData.now][store.user.uid]">
+              <template v-for="(hand, key) of hands">
+                <v-col v-if="roomData.results[roomData.now][roomData.owner] == key" cols="6" :key="key"
+                       align-self="center"
+                       v-ripple class="pa-0 col-md-4">
+                  <v-card style="text-align: center; border-style: solid; border-width: 4px;" shaped elevation="5"
+                          :style="{borderColor: hand.color, color: hand.color}" class="py-10" :class="{
+                        'display-3': $vuetify.breakpoint.smAndDown, 'display-4': $vuetify.breakpoint.mdAndUp}">
+                    <v-icon style="font-size: inherit; color: inherit;">{{ hand.icon }}</v-icon>
+                  </v-card>
+                </v-col>
+              </template>
+            </template>
+            <v-col v-else cols="6" class="pa-0 col-md-4">
+              <v-card style="text-align: center; border: solid 10px white;" shaped v-ripple elevation="5"
+                      class="py-10 blue-gradation mx-auto" :class="{
+                'display-3': $vuetify.breakpoint.smAndDown,
+                'display-4': $vuetify.breakpoint.mdAndUp}">
+                <v-icon style="font-size: inherit; color: inherit;"></v-icon>
+              </v-card>
+            </v-col>
+          </transition>
+        </v-row>
       </div>
-      <v-row>
+      <v-row class="mt-3">
+        <!--じゃんけんぽん-->
         <v-col cols="12" style="position: relative;" class="my-3 mx-auto">
           <template v-for="(word, i) of animations.rsp.words">
             <transition :key="i" :name="animations.rsp.animationType" mode="out-in"
@@ -60,18 +91,21 @@
             </transition>
           </template>
         </v-col>
-        <template v-if="isEndAnimation(animations.rsp)">
-          <v-col cols="4" v-for="(hand, key) of hands" :key="key" v-ripple class="mt-3">
-            <v-card style="text-align: center; border-style: solid; border-width: 4px;" shaped elevation="5"
-                    :style="{borderColor: hand.color, color: hand.color}"
-                    class="py-10 " :class="{
-                'display-3': $vuetify.breakpoint.smAndDown,
-                'display-4': $vuetify.breakpoint.mdAndUp
-              }">
-              <v-icon style="font-size: inherit; color: inherit;">{{ hand.icon }}</v-icon>
-            </v-card>
+        <!--出す 手-->
+        <transition>
+          <v-col cols="12" v-if="isEndAnimation(animations.rsp)" class="pa-0">
+            <v-row>
+              <v-col @click="selectHand(key)" cols="4" v-for="(hand, key) of hands" :key="key" v-ripple>
+                <v-card style="text-align: center; border-style: solid; border-width: 4px;" shaped elevation="5"
+                        :style="handCheck(key) ? {borderColor: hand.color, color: hand.color} : {borderColor: '#999', color: '#999'}"
+                        class="py-10"
+                        :class="{ 'display-3': $vuetify.breakpoint.smAndDown, 'display-4': $vuetify.breakpoint.mdAndUp }">
+                  <v-icon style="font-size: inherit; color: inherit;">{{ hand.icon }}</v-icon>
+                </v-card>
+              </v-col>
+            </v-row>
           </v-col>
-        </template>
+        </transition>
       </v-row>
       <v-row style="max-width: 500px;">
         <v-col cols="12">
@@ -192,7 +226,7 @@ export default {
           },
           {
             text: "ポン！！",
-            class: "primary--text display-2 font-weight-bold"
+            class: "primary--text display-1 font-weight-bold"
           }
         ]
       }
@@ -222,6 +256,26 @@ export default {
           return true;
         }
         return false;
+      }
+    },
+    handCheck: function () {
+      return function (hand) {
+        if (this.roomData.now < 0) {
+          return true;
+        }
+        if (!this.roomData.results) {
+          return true;
+        }
+        if (!this.roomData.results[this.roomData.now]) {
+          return true;
+        }
+        if (this.roomData.results[this.roomData.now][this.store.user.uid]) {
+          if (this.roomData.results[this.roomData.now][this.store.user.uid] == hand) {
+            return true;
+          }
+          return false;
+        }
+        return true;
       }
     },
   },
@@ -297,12 +351,10 @@ export default {
       //既入室確認
       if (this.roomData.owner == this.store.user.uid) {
         this.isOwner = true;
-        console.log(1);
         await this.listenMessage();
         return;
       }
       if (this.roomData.children.includes(this.store.user.uid)) {
-        console.log(2);
         await this.listenMessage();
         return;
       }
@@ -334,7 +386,6 @@ export default {
       }
 
       //チャット取得処理
-      console.log(3);
       await this.listenMessage();
     },
     listenMessage() {
@@ -361,7 +412,9 @@ export default {
     async onChangeRoomState() {
       if (this.now != this.roomData.now) {
         this.now = this.roomData.now;
-        this.animations.rsp.animation = 0;
+        this.$nextTick(() => {
+          this.animations.rsp.animation = 0;
+        });
       }
       if (!this.roomData && this.onetime2) {
         this.onetime2 = false;
@@ -369,6 +422,31 @@ export default {
             {text: "オーナーによって解散されました．"}
         );
         this.$router.push("/rooms");
+        return;
+      }
+    },
+    async selectHand(hand) {
+      if (this.roomData.now < 0) {
+        return;
+      }
+      if (this.roomData.results[this.roomData.now] && this.roomData.results[this.roomData.now][this.store.user.uid]) {
+        return;
+      }
+      console.log(hand);
+      let arr = {};
+      arr[this.roomData.now] = {};
+      arr[this.roomData.now][this.store.user.uid] = hand;
+      console.log(arr);
+      let res = this.db.doc('rooms/' + this.roomId).set({
+        results: arr,
+      }, {merge: true}).then(function () {
+        return true;
+      }).catch(function (err) {
+        console.log(err);
+        return false;
+      });
+      if (!res) {
+        this.store.messages.push({text: "手の送信に失敗しました．"});
         return;
       }
     },
