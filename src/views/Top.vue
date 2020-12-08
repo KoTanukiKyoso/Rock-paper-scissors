@@ -132,6 +132,7 @@ export default {
       time: 0,
       roomSettingBase: {
         now: 0,
+        ofNow: 0,
         results: {},
         children: [],
         recruitment: true,

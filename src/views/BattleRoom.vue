@@ -34,17 +34,19 @@
       </v-row>
       <div v-if="isOwner" class="ma-4">
         <v-row>
-          <h2>あなたが親です</h2>
+          <h3>あなたが親です</h3>
           <v-col cols="12">
             <v-btn v-if="roomData.recruitment" @click="closeRecruit" x-large color="primary">募集を締め切る</v-btn>
             <v-btn v-else-if="roomData.now < roomData.numOfBattle" @click="goToNextBattle" x-large color="primary">
               次のじゃんけんに進む
             </v-btn>
-            <v-btn v-else-if="roomData.now >= roomData.numOfBattle" x-large color="primary">対戦を終了する</v-btn>
+            <v-btn v-else-if="roomData.now >= roomData.numOfBattle" @click="closeRoom" x-large color="primary">対戦を終了する</v-btn>
+            <v-btn v-if="isAiko" x-large color="secondary ml-2">あいこでしょ</v-btn>
           </v-col>
         </v-row>
       </div>
       <div v-else>
+        <h3 v-if="roomData.recruitment" class="d-block py-3">親の開始を待っています...</h3>
         <v-row justify="center">
           <v-col cols="3"></v-col>
           <v-col cols="6">
@@ -55,9 +57,8 @@
             <template v-if="roomData.results && roomData.results[roomData.now] && roomData.results[roomData.now][roomData.owner]
           && roomData.results[roomData.now][store.user.uid]">
               <template v-for="(hand, key) of hands">
-                <v-col v-if="roomData.results[roomData.now][roomData.owner] == key" cols="6" :key="key"
-                       align-self="center"
-                       v-ripple class="pa-0 col-md-4">
+                <v-col v-if="roomData.results[roomData.now][roomData.owner].hand == key" cols="6" :key="key"
+                       align-self="center" v-ripple class="pa-0 col-md-4">
                   <v-card style="text-align: center; border-style: solid; border-width: 4px;" shaped elevation="5"
                           :style="{borderColor: hand.color, color: hand.color}" class="py-10" :class="{
                         'display-3': $vuetify.breakpoint.smAndDown, 'display-4': $vuetify.breakpoint.mdAndUp}">
@@ -94,8 +95,8 @@
         <!--出す 手-->
         <transition>
           <v-col cols="12" v-if="isEndAnimation(animations.rsp)" class="pa-0">
-            <v-row>
-              <v-col @click="selectHand(key)" cols="4" v-for="(hand, key) of hands" :key="key" v-ripple>
+            <v-row justify="center" class="px-2 mx-auto" style="max-width: 1000px;">
+              <v-col @click="selectHand(key)" v-for="(hand, key) of hands" :key="key" v-ripple class="px-1 px-md-2">
                 <v-card style="text-align: center; border-style: solid; border-width: 4px;" shaped elevation="5"
                         :style="handCheck(key) ? {borderColor: hand.color, color: hand.color} : {borderColor: '#999', color: '#999'}"
                         class="py-10"
@@ -270,7 +271,7 @@ export default {
           return true;
         }
         if (this.roomData.results[this.roomData.now][this.store.user.uid]) {
-          if (this.roomData.results[this.roomData.now][this.store.user.uid] == hand) {
+          if (this.roomData.results[this.roomData.now][this.store.user.uid].hand == hand) {
             return true;
           }
           return false;
@@ -278,6 +279,24 @@ export default {
         return true;
       }
     },
+    isAiko: function () {
+      let result = this.roomData.results[this.roomData.now];
+      //まだ手を出していない
+      if (!result || !result[this.store.user.uid]) {
+        return false;
+      }
+      //あいこ後再戦しない
+      if (!this.roomData.rematchAiko) {
+        return false;
+      }
+      for (let key in result) {
+        let res = result[key];
+        if (res.hand == result[this.store.user.uid].hand) {
+          return true;
+        }
+      }
+      return false;
+    }
   },
   methods: {
     GetURLGet() {
@@ -435,7 +454,11 @@ export default {
       console.log(hand);
       let arr = {};
       arr[this.roomData.now] = {};
-      arr[this.roomData.now][this.store.user.uid] = hand;
+      arr[this.roomData.now][this.store.user.uid] = {
+        hand: hand,
+        owner: "",
+        ofNow: this.roomData.ofNow,
+      };
       console.log(arr);
       let res = this.db.doc('rooms/' + this.roomId).set({
         results: arr,
@@ -453,6 +476,19 @@ export default {
     goToNextBattle() {
       let res = this.db.doc('rooms/' + this.roomId).update({
         now: this.roomData.now + 1,
+      }).then(function () {
+        return true;
+      }).catch(function (err) {
+        console.log(err);
+        return false;
+      });
+      if (!res) {
+        this.store.messages.push({text: "次のじゃんけんに進めませんでした．"});
+        return;
+      }
+
+      res = this.db.doc('rooms/' + this.roomId).update({
+        ofNow: 0,
       }).then(function () {
         return true;
       }).catch(function (err) {
