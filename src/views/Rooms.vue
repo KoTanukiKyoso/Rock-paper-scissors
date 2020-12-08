@@ -14,7 +14,8 @@
       </div>
       <v-row>
         <v-col v-for="(room, key) of rooms" :key="key" cols="6" class="col-md-4">
-          <v-card @click="intoRoom(room, key)" style="border-top-width: 4px; border-top-style: solid;"
+          <v-card v-if="room.recruitment || (room.owner == store.user.uid || room.children.includes(store.user.uid))"
+                  @click="intoRoom(room, key)" style="border-top-width: 4px; border-top-style: solid;"
                   :style="
                       room.owner == store.user.uid ? {borderTopColor: store.colors.secondary} :
                       room.children.includes(store.user.uid) ? {borderTopColor: store.colors.info} :
@@ -117,6 +118,11 @@ export default {
     },
   }),
   created() {
+    console.log("created rooms");
+    for (let listener of this.store.listeners) {
+      listener();
+    }
+    this.store.listeners = [];
     this.db = this.store.firebase.firestore();
     this.password = "";
     this.listenRoom();
@@ -124,15 +130,16 @@ export default {
   methods: {
     listenRoom() {
       let self = this;
-      this.db.collection("rooms").where("recruitment", "==", true)
-          .orderBy("timestamp", "desc").limit(50)
+      let listener = this.db.collection("rooms").orderBy("timestamp", "desc").limit(50)
           .onSnapshot(function (querySnapshot) {
+            console.log("changed rooms");
             let rooms = {};
             querySnapshot.forEach(function (doc) {
               rooms[doc.id] = doc.data();
             });
             self.rooms = rooms;
           });
+      this.store.listeners.push(listener);
     },
     async intoRoom(room, key) {
       //自分がオーナーなら

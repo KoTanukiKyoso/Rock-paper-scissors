@@ -60,6 +60,7 @@ Vue.use(VueSweetalert2);
 Vue.prototype.store.user = null;
 Vue.prototype.store.firebase = firebase;
 Vue.prototype.store.messages = [];
+Vue.prototype.store.listeners = [];
 
 Vue.config.productionTip = false
 

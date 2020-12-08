@@ -29,15 +29,17 @@
         </div>
         <v-spacer></v-spacer>
         <div v-if="roomData.now" class="d-inline-block pr-2">
-          第 <span class=" font-weight-bold primary--text">{{ roomData.now }}</span> 回戦
+          第 <span class=" font-weight-bold primary--text">{{ roomData.now }} / {{ roomData.numOfBattle }}</span> 回戦
         </div>
       </v-row>
       <div v-if="isOwner" class="ma-4">
         <v-row>
           <h2>あなたが親です</h2>
           <v-col cols="12">
-            <v-btn v-if="roomData.recruitment" x-large color="primary">募集を締め切る</v-btn>
-            <v-btn v-else-if="roomData.now < roomData.numOfBattle" x-large color="primary">次のじゃんけんに進む</v-btn>
+            <v-btn v-if="roomData.recruitment" @click="closeRecruit" x-large color="primary">募集を締め切る</v-btn>
+            <v-btn v-else-if="roomData.now < roomData.numOfBattle" @click="goToNextBattle" x-large color="primary">
+              次のじゃんけんに進む
+            </v-btn>
             <v-btn v-else-if="roomData.now >= roomData.numOfBattle" x-large color="primary">対戦を終了する</v-btn>
           </v-col>
         </v-row>
@@ -45,17 +47,31 @@
       <div v-else>
 
       </div>
-      <v-row v-if="roomData.now > 0">
-        <v-col cols="4" v-for="(hand, key) of hands" :key="key" v-ripple>
-          <v-card style="text-align: center; border-style: solid; border-width: 4px;" shaped elevation="5"
-                  :style="{borderColor: hand.color, color: hand.color}"
-                  class="py-10 " :class="{
+      <v-row>
+        <v-col cols="12" style="position: relative;" class="my-3 mx-auto">
+          <template v-for="(word, i) of animations.rsp.words">
+            <transition :key="i" :name="animations.rsp.animationType" mode="out-in"
+                        @after-enter="nextAnime(animations.rsp)">
+              <h1 v-if="animations.rsp.animation == i"
+                  style="position: absolute; top: 0; text-align: center; right: 0; left: 0;"
+                  class="mx-auto" :class="word.class">
+                {{ word.text }}
+              </h1>
+            </transition>
+          </template>
+        </v-col>
+        <template v-if="isEndAnimation(animations.rsp)">
+          <v-col cols="4" v-for="(hand, key) of hands" :key="key" v-ripple class="mt-3">
+            <v-card style="text-align: center; border-style: solid; border-width: 4px;" shaped elevation="5"
+                    :style="{borderColor: hand.color, color: hand.color}"
+                    class="py-10 " :class="{
                 'display-3': $vuetify.breakpoint.smAndDown,
                 'display-4': $vuetify.breakpoint.mdAndUp
               }">
-            <v-icon style="font-size: inherit; color: inherit;">{{ hand.icon }}</v-icon>
-          </v-card>
-        </v-col>
+              <v-icon style="font-size: inherit; color: inherit;">{{ hand.icon }}</v-icon>
+            </v-card>
+          </v-col>
+        </template>
       </v-row>
       <v-row style="max-width: 500px;">
         <v-col cols="12">
@@ -127,6 +143,7 @@ export default {
     Fa
   },
   data: () => ({
+    now: 0,
     hands: {
       rock: {
         name: "グー",
@@ -159,16 +176,85 @@ export default {
     },
     chatText: "",
     messages: [],
+    animations: {
+      rsp: {
+        span: 1000,
+        animationType: "fromLeftToRight",
+        animation: -1,
+        words: [
+          {
+            text: "最初はグー",
+            class: ""
+          },
+          {
+            text: "じゃん ・ けん",
+            class: ""
+          },
+          {
+            text: "ポン！！",
+            class: "primary--text display-2 font-weight-bold"
+          }
+        ]
+      }
+    }
   }),
   created: function () {
+    console.log("created battle room");
+    for (let listener of this.store.listeners) {
+      listener();
+    }
+    this.store.listeners = [];
     this.roomData = {};
     this.messages = [];
+    for (let key in this.animations) {
+      let anime = this.animations[key];
+      anime.animation = -1;
+    }
     this.onetime = true;
     this.onetime2 = true;
     this.db = this.store.firebase.firestore();
     this.intoRoom();
   },
+  computed: {
+    isEndAnimation: function () {
+      return function (anime) {
+        if (anime.words.length - 1 <= anime.animation) {
+          return true;
+        }
+        return false;
+      }
+    },
+  },
   methods: {
+    GetURLGet() {
+      let url = location.href;
+      let result = {};
+      // 最初の1文字 (?記号) を除いた文字列を取得する
+      let query = url.split("?");
+      if (query.length < 2) {
+        return result;
+      }
+      query = query[1];
+      // クエリの区切り記号 (&) で文字列を配列に分割する
+      let parameters = query.split('&');
+      for (let i = 0; i < parameters.length; i++) {
+        // パラメータ名とパラメータ値に分割する
+        let element = parameters[i].split('=');
+        let paramName = decodeURIComponent(element[0]);
+        let paramValue = decodeURIComponent(element[1]);
+
+        // パラメータ名をキーとして連想配列に追加する
+        result[paramName] = paramValue;
+      }
+      return result;
+    },
+    nextAnime(anime) {
+      setTimeout(() => {
+        if (anime.animation < anime.words.length - 1) {
+          anime.animation++;
+        }
+      }, anime.span);
+    },
     async intoRoom() {
       let self = this;
       let gets = this.GetURLGet();
@@ -180,8 +266,9 @@ export default {
         return;
       }
       this.roomId = gets.id;
-      await this.db.collection("rooms").doc(gets.id)
+      let listener = await this.db.collection("rooms").doc(gets.id)
           .onSnapshot(function (doc) {
+            console.log("battle room changed");
             self.roomData = doc.data();
             if (self.onetime) {
               self.onetime = false;
@@ -196,6 +283,7 @@ export default {
             this.$router.push("/rooms");
             return;
           });
+      this.store.listeners.push(listener);
     },
     async checkRoom() {
       if (!this.roomData) {
@@ -209,11 +297,13 @@ export default {
       //既入室確認
       if (this.roomData.owner == this.store.user.uid) {
         this.isOwner = true;
-        this.listenMessage();
+        console.log(1);
+        await this.listenMessage();
         return;
       }
       if (this.roomData.children.includes(this.store.user.uid)) {
-        this.listenMessage();
+        console.log(2);
+        await this.listenMessage();
         return;
       }
 
@@ -244,13 +334,16 @@ export default {
       }
 
       //チャット取得処理
-      this.listenMessage();
+      console.log(3);
+      await this.listenMessage();
     },
     listenMessage() {
+      console.log("listenMessage");
       let self = this;
-      this.db.collection("messages").where("room", "==", this.roomId)
+      let listener = this.db.collection("messages").where("room", "==", this.roomId)
           .orderBy("timestamp", "desc").limit(100)
           .onSnapshot(function (querySnapshot) {
+            console.log("messages changed");
             let messages = [];
             querySnapshot.forEach(function (doc) {
               let data = doc.data();
@@ -263,15 +356,33 @@ export default {
               container.scrollTop = container.scrollHeight;
             })
           });
+      this.store.listeners.push(listener);
     },
     async onChangeRoomState() {
-      console.log("state changed");
+      if (this.now != this.roomData.now) {
+        this.now = this.roomData.now;
+        this.animations.rsp.animation = 0;
+      }
       if (!this.roomData && this.onetime2) {
         this.onetime2 = false;
         this.store.messages.push(
             {text: "オーナーによって解散されました．"}
         );
         this.$router.push("/rooms");
+        return;
+      }
+    },
+    goToNextBattle() {
+      let res = this.db.doc('rooms/' + this.roomId).update({
+        now: this.roomData.now + 1,
+      }).then(function () {
+        return true;
+      }).catch(function (err) {
+        console.log(err);
+        return false;
+      });
+      if (!res) {
+        this.store.messages.push({text: "次のじゃんけんに進めませんでした．"});
         return;
       }
     },
@@ -297,28 +408,6 @@ export default {
         this.store.messages.push({text: "送信に失敗しました．送信に失敗した可能性があります．"});
       }
     },
-    GetURLGet() {
-      let url = location.href;
-      let result = {};
-      // 最初の1文字 (?記号) を除いた文字列を取得する
-      let query = url.split("?");
-      if (query.length < 2) {
-        return result;
-      }
-      query = query[1];
-      // クエリの区切り記号 (&) で文字列を配列に分割する
-      let parameters = query.split('&');
-      for (let i = 0; i < parameters.length; i++) {
-        // パラメータ名とパラメータ値に分割する
-        let element = parameters[i].split('=');
-        let paramName = decodeURIComponent(element[0]);
-        let paramValue = decodeURIComponent(element[1]);
-
-        // パラメータ名をキーとして連想配列に追加する
-        result[paramName] = paramValue;
-      }
-      return result;
-    },
     async closeRoom() {
       if (this.roomData.owner != this.store.user.uid) {
         return;
@@ -343,19 +432,29 @@ export default {
       if (!rr) {
         return;
       }
+
+      //チャットの削除
+      let batch = this.db.batch();
+      await (async () => {
+        const snapshots = await this.db.collection("messages").where("room", "==", this.roomId).get();
+        await snapshots.docs.map((doc, index) => {
+          if ((index + 1) % 500 === 0) {
+            batch.commit();
+            batch = this.db.batch();
+          }
+          batch.delete(doc.ref);
+        });
+        await batch.commit();
+      })();
+
+      //部屋の削除
       let res = this.db.doc('rooms/' + this.roomId).delete().then(function () {
         return true;
       }).catch(function (err) {
         console.log(err);
         return false;
       });
-      if (res) {
-        // this.store.messages.push(
-        //     {text: "部屋を解散しました．"}
-        // );
-        // await this.$router.push("/rooms");
-        return;
-      } else {
+      if (!res) {
         this.store.messages.push(
             {text: "部屋の解散に失敗しました．"}
         );
@@ -402,6 +501,38 @@ export default {
         this.store.messages.push(
             {text: "部屋の退出に失敗しました．"}
         );
+        return;
+      }
+    },
+    closeRecruit() {
+      if (this.roomData.children.length == 0) {
+        this.store.messages.push({text: "対戦相手が0の状態で募集締め切りは出来ません．"});
+        return;
+      }
+
+      let res = this.db.doc('rooms/' + this.roomId).update({
+        recruitment: false,
+      }).then(function () {
+        return true;
+      }).catch(function (err) {
+        console.log(err);
+        return false;
+      });
+      if (!res) {
+        this.store.messages.push({text: "募集の締め切りに失敗しました．"});
+        return;
+      }
+
+      res = this.db.doc('rooms/' + this.roomId).update({
+        now: 1,
+      }).then(function () {
+        return true;
+      }).catch(function (err) {
+        console.log(err);
+        return false;
+      });
+      if (!res) {
+        this.store.messages.push({text: "じゃんけんの開始に失敗しました．"});
         return;
       }
     }

@@ -32,6 +32,30 @@
   transform: translateX(-400px);
 }
 
+.fromLeftToRight-leave-active,
+.fromLeftToRight-enter-active {
+  /* transition: opacity 1s; */
+  transition: all 0.4s;
+}
+
+.fromLeftToRight-enter {
+  opacity: 0;
+  transform: translateX(-200px);
+}
+
+.fromLeftToRight-enter-to {
+  opacity: 1;
+}
+
+.fromLeftToRight-leave {
+  opacity: 1;
+}
+
+.fromLeftToRight-leave-to {
+  opacity: 0;
+  transform: translateX(200px);
+}
+
 
 /*縦方向*/
 .downup-leave-active,

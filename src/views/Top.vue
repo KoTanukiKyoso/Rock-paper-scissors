@@ -166,7 +166,11 @@ export default {
     }
   },
   created: function () {
-    console.log("created");
+    console.log("top created");
+    for (let listener of this.store.listeners) {
+      listener();
+    }
+    this.store.listeners = [];
     this.roomSetting = {...this.roomSettingBase};
     this.db = this.store.firebase.firestore();
   },
