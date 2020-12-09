@@ -1,6 +1,6 @@
 <template>
   <v-main>
-    <v-container v-if="Object.keys(roomData).length > 0">
+    <v-container v-if="Object.keys(room).length > 0">
       <v-row class="px-2">
         <router-link to="/rooms">
           <Fa :icon="faArrowLeft" fw size="lg"/>
@@ -11,16 +11,17 @@
         </v-btn>
         <v-btn v-else text x-large @click="exitRoom" color="primary" class="font-weight-bold">退出する</v-btn>
       </v-row>
+      <!--state display-->
       <v-row class="px-2">
         <div class="d-inline-block pr-5">
           参加人数：
           <span class="font-weight-bold primary--text">
-            {{ roomData.children.length }}/{{ roomData.numOfChildren }}
+            {{ room.children.length }}/{{ room.numOfChildren }}
           </span>
         </div>
         <div class="d-inline-block pr-5">
           状態：
-          <span v-if="roomData.recruitment" class="font-weight-bold primary--text">
+          <span v-if="room.recruitment" class="font-weight-bold primary--text">
             参加者募集中
           </span>
           <span v-else class="font-weight-bold primary--text">
@@ -28,26 +29,27 @@
           </span>
         </div>
         <v-spacer></v-spacer>
-        <div v-if="roomData.now" class="d-inline-block pr-2">
-          第 <span class=" font-weight-bold primary--text">{{ roomData.now }} / {{ roomData.numOfBattle }}</span> 回戦
+        <div v-if="room.now" class="d-inline-block pr-2">
+          第 <span class=" font-weight-bold primary--text">{{ room.now }} / {{ room.numOfBattle }}</span> 回戦
         </div>
       </v-row>
+
       <div v-if="isOwner" class="ma-4">
         <v-row>
           <h3>あなたが親です</h3>
           <v-col cols="12">
-            <v-btn v-if="roomData.recruitment" @click="closeRecruit" x-large color="primary">募集を締め切る</v-btn>
-            <v-btn v-else-if="roomData.now < roomData.numOfBattle" @click="goToNextBattle" x-large color="primary">
+            <v-btn v-if="room.recruitment" @click="closeRecruit" x-large color="primary">募集を締め切る</v-btn>
+            <v-btn v-else-if="room.now < room.numOfBattle" @click="goToNextBattle" x-large color="primary">
               次のじゃんけんに進む
             </v-btn>
-            <v-btn v-else-if="roomData.now >= roomData.numOfBattle" @click="closeRoom" x-large color="primary">対戦を終了する
+            <v-btn v-else-if="room.now >= room.numOfBattle" @click="closeRoom" x-large color="primary">対戦を終了する
             </v-btn>
             <v-btn v-if="isAiko" @click="aikoRematch" x-large color="secondary ml-2">あいこでしょ</v-btn>
           </v-col>
         </v-row>
       </div>
       <div v-else>
-        <h3 v-if="roomData.recruitment" class="d-block py-3">親の開始を待っています...</h3>
+        <h3 v-if="room.recruitment" class="d-block py-3">親の開始を待っています...</h3>
         <v-row justify="center">
           <v-col cols="3"></v-col>
           <v-col cols="6">
@@ -55,10 +57,10 @@
           </v-col>
           <v-col cols="3"></v-col>
           <transition>
-            <template v-if="roomData.results && roomData.results[roomData.now] && roomData.results[roomData.now][roomData.owner]
-          && roomData.results[roomData.now][store.user.uid]">
+            <template v-if="room.results && room.results[room.now] && room.results[room.now][room.owner]
+          && room.results[room.now][store.user.uid]">
               <template v-for="(hand, key) of hands">
-                <v-col v-if="roomData.results[roomData.now][roomData.owner].hand == key" cols="6" :key="key"
+                <v-col v-if="room.results[room.now][room.owner].hand == key" cols="6" :key="key"
                        align-self="center" v-ripple class="pa-0 col-md-4">
                   <v-card style="text-align: center; border-style: solid; border-width: 4px;" shaped elevation="5"
                           :style="{borderColor: hand.color, color: hand.color}" class="py-10" :class="{
@@ -81,7 +83,7 @@
       </div>
       <v-row class="mt-3">
         <!--じゃんけんぽん-->
-        <v-col cols="12" style="position: relative;" class="my-3 mx-auto">
+        <v-col v-if="room.ofNow == 0" cols="12" style="position: relative;" class="my-3 mx-auto">
           <template v-for="(word, i) of animations.rsp.words">
             <transition :key="i" :name="animations.rsp.animationType" mode="out-in"
                         @after-enter="nextAnime(animations.rsp)">
@@ -93,9 +95,13 @@
             </transition>
           </template>
         </v-col>
+        <v-col v-else-if="isAikoUser" cols="12" style="position: relative;" class="my-3 mx-auto">
+          <h1 style="position: absolute; top: 0; text-align: center; right: 0; left: 0;"
+              class="mx-auto">あいこで しょ！</h1>
+        </v-col>
         <!--出す 手-->
         <transition>
-          <v-col cols="12" v-if="isEndAnimation(animations.rsp)" class="pa-0">
+          <v-col cols="12" v-if="isEndAnimation(animations.rsp) || isAikoUser" class="pa-0">
             <v-row justify="center" class="px-2 mx-auto" style="max-width: 1000px;">
               <v-col @click="selectHand(key)" v-for="(hand, key) of hands" :key="key" v-ripple class="px-1 px-md-2">
                 <v-card style="text-align: center; border-style: solid; border-width: 4px;" shaped elevation="5"
@@ -109,6 +115,8 @@
           </v-col>
         </transition>
       </v-row>
+
+      <!--チャット-->
       <v-row style="max-width: 500px;">
         <v-col cols="12">
           <v-card class="ma-5 mx-auto" style="min-height: 300px;">
@@ -123,7 +131,7 @@
                   <span class="px-2 subtitle-1 font-weight-bold">あなた</span>
                 </v-card-title>
 
-                <v-card-title v-else-if="roomData.owner == message.uid" class="py-2">
+                <v-card-title v-else-if="room.owner == message.uid" class="py-2">
                   <v-avatar color="secondary" size="30">
                     <span class="white--text subtitle-2">親</span>
                   </v-avatar>
@@ -199,11 +207,10 @@ export default {
     },
     faArrowLeft,
     db: null,
-    roomData: {},
+    room: {},
     roomId: "",
     isOwner: false,
     onetime: true,
-    onetime2: true,
     show1: false,
     rules: {
       required: value => !!value || '必須入力.',
@@ -240,14 +247,13 @@ export default {
       listener();
     }
     this.store.listeners = [];
-    this.roomData = {};
+    this.room = {};
     this.messages = [];
     for (let key in this.animations) {
       let anime = this.animations[key];
       anime.animation = -1;
     }
     this.onetime = true;
-    this.onetime2 = true;
     this.db = this.store.firebase.firestore();
     this.intoRoom();
   },
@@ -262,17 +268,17 @@ export default {
     },
     handCheck: function () {
       return function (hand) {
-        if (this.roomData.now < 0) {
+        if (this.room.now < 0) {
           return true;
         }
-        if (!this.roomData.results) {
+        if (!this.room.results) {
           return true;
         }
-        if (!this.roomData.results[this.roomData.now]) {
+        if (!this.room.results[this.room.now]) {
           return true;
         }
-        if (this.roomData.results[this.roomData.now][this.store.user.uid]) {
-          if (this.roomData.results[this.roomData.now][this.store.user.uid].hand == hand) {
+        if (this.room.results[this.room.now][this.store.user.uid]) {
+          if (this.room.results[this.room.now][this.store.user.uid].hand == hand) {
             return true;
           }
           return false;
@@ -281,23 +287,35 @@ export default {
       }
     },
     isAiko: function () {
-      let result = this.roomData.results[this.roomData.now];
+      let result = this.room.results[this.room.now];
       //まだ手を出していない
       if (!result || !result[this.store.user.uid]) {
         return false;
       }
       //あいこ後再戦しない
-      if (!this.roomData.rematchAiko) {
+      if (!this.room.rematchAiko) {
         return false;
       }
+      // console.log(123);
       for (let key in result) {
         let res = result[key];
-        if (this.roomData.ofNow == res.ofNow && res.hand == result[this.store.user.uid].hand) {
+        if (this.room.ofNow == res.ofNow && res.hand == result[this.store.user.uid].hand && key != this.room.owner) {
+          // console.log(1234);
           return true;
         }
       }
+      // console.log(12345);
       return false;
-    }
+    },
+    isAikoUser: function () {
+      //あいこユーザの条件
+      //自分のじゃんけんデータがnullである
+      if (this.room && this.room.results[this.room.now] &&
+          this.room.results[this.room.now][this.store.user.uid] === null) {
+        return true;
+      }
+      return false;
+    },
   },
   methods: {
     GetURLGet() {
@@ -343,7 +361,14 @@ export default {
       let listener = await this.db.collection("rooms").doc(gets.id)
           .onSnapshot(function (doc) {
             console.log("battle room changed");
-            self.roomData = doc.data();
+            if (!doc.exists) {
+              self.store.messages.push(
+                  {text: "オーナーによって解散されました．"}
+              );
+              self.$router.push("/rooms");
+              return;
+            }
+            self.room = doc.data();
             if (self.onetime) {
               self.onetime = false;
               self.checkRoom();
@@ -360,7 +385,7 @@ export default {
       this.store.listeners.push(listener);
     },
     async checkRoom() {
-      if (!this.roomData) {
+      if (!this.room) {
         this.store.messages.push(
             {text: "部屋が存在しないか削除済みです．"}
         );
@@ -369,18 +394,18 @@ export default {
       }
 
       //既入室確認
-      if (this.roomData.owner == this.store.user.uid) {
+      if (this.room.owner == this.store.user.uid) {
         this.isOwner = true;
         await this.listenMessage();
         return;
       }
-      if (this.roomData.children.includes(this.store.user.uid)) {
+      if (this.room.children.includes(this.store.user.uid)) {
         await this.listenMessage();
         return;
       }
 
       //入室してない場合空きがあって鍵部屋でなければ入室
-      if (this.roomData.lock || this.roomData.children.length >= this.roomData.numOfChildren) {
+      if (this.room.lock || this.room.children.length >= this.room.numOfChildren) {
         this.store.messages.push(
             {text: "この部屋は既に一杯です．"}
         );
@@ -430,35 +455,27 @@ export default {
       this.store.listeners.push(listener);
     },
     async onChangeRoomState() {
-      if (this.now != this.roomData.now) {
-        this.now = this.roomData.now;
+      if (this.now != this.room.now) {
+        this.now = this.room.now;
         this.$nextTick(() => {
           this.animations.rsp.animation = 0;
         });
       }
-      if (!this.roomData && this.onetime2) {
-        this.onetime2 = false;
-        this.store.messages.push(
-            {text: "オーナーによって解散されました．"}
-        );
-        this.$router.push("/rooms");
-        return;
-      }
     },
     async selectHand(hand) {
-      if (this.roomData.now < 0) {
+      if (this.room.now < 0) {
         return;
       }
-      if (this.roomData.results[this.roomData.now] && this.roomData.results[this.roomData.now][this.store.user.uid]) {
+      if (this.room.results[this.room.now] && this.room.results[this.room.now][this.store.user.uid]) {
         return;
       }
       console.log(hand);
       let arr = {};
-      arr[this.roomData.now] = {};
-      arr[this.roomData.now][this.store.user.uid] = {
+      arr[this.room.now] = {};
+      arr[this.room.now][this.store.user.uid] = {
         hand: hand,
         owner: "",
-        ofNow: this.roomData.ofNow,
+        ofNow: this.room.ofNow,
       };
       console.log(arr);
       let res = this.db.doc('rooms/' + this.roomId).set({
@@ -475,7 +492,29 @@ export default {
       }
     },
     aikoRematch() {
-      //TODO:
+      let batch = this.db.batch();
+
+      let nycRef = this.db.collection("rooms").doc(this.roomId);
+      batch.update(nycRef, {ofNow: this.room.ofNow + 1});
+
+      let rr = this.room.results[this.room.now];
+      for (let key in rr) {
+        let result = rr[key];
+        //今試合あいこなら
+        if (result.ofNow == this.room.ofNow && result.hand == rr[this.room.owner].hand) {
+          let arr = {};
+          arr[this.room.now] = {};
+          arr[this.room.now][key] = null;
+          batch.set(nycRef, {results: arr}, {merge: true});
+        }
+      }
+
+      batch.commit().then(function () {
+        console.log("success");
+      }).catch(function (err) {
+        console.log(err);
+        return false;
+      });
     },
     saveResult() {
       //TODO:
@@ -483,7 +522,7 @@ export default {
     goToNextBattle() {
       this.saveResult();
       let res = this.db.doc('rooms/' + this.roomId).update({
-        now: this.roomData.now + 1,
+        now: this.room.now + 1,
       }).then(function () {
         return true;
       }).catch(function (err) {
@@ -531,7 +570,7 @@ export default {
       }
     },
     async closeRoom() {
-      if (this.roomData.owner != this.store.user.uid) {
+      if (this.room.owner != this.store.user.uid) {
         return;
       }
       let rr = await this.$swal(
@@ -570,6 +609,10 @@ export default {
       })();
 
       this.saveResult();
+      // let test = true;
+      // if(true == test){
+      //   return;
+      // }
       //部屋の削除
       let res = this.db.doc('rooms/' + this.roomId).delete().then(function () {
         return true;
@@ -628,7 +671,7 @@ export default {
       }
     },
     closeRecruit() {
-      if (this.roomData.children.length == 0) {
+      if (this.room.children.length == 0) {
         this.store.messages.push({text: "対戦相手が0の状態で募集締め切りは出来ません．"});
         return;
       }
