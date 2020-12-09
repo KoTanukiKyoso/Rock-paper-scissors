@@ -40,8 +40,9 @@
             <v-btn v-else-if="roomData.now < roomData.numOfBattle" @click="goToNextBattle" x-large color="primary">
               次のじゃんけんに進む
             </v-btn>
-            <v-btn v-else-if="roomData.now >= roomData.numOfBattle" @click="closeRoom" x-large color="primary">対戦を終了する</v-btn>
-            <v-btn v-if="isAiko" x-large color="secondary ml-2">あいこでしょ</v-btn>
+            <v-btn v-else-if="roomData.now >= roomData.numOfBattle" @click="closeRoom" x-large color="primary">対戦を終了する
+            </v-btn>
+            <v-btn v-if="isAiko" @click="aikoRematch" x-large color="secondary ml-2">あいこでしょ</v-btn>
           </v-col>
         </v-row>
       </div>
@@ -291,7 +292,7 @@ export default {
       }
       for (let key in result) {
         let res = result[key];
-        if (res.hand == result[this.store.user.uid].hand) {
+        if (this.roomData.ofNow == res.ofNow && res.hand == result[this.store.user.uid].hand) {
           return true;
         }
       }
@@ -473,7 +474,14 @@ export default {
         return;
       }
     },
+    aikoRematch() {
+      //TODO:
+    },
+    saveResult() {
+      //TODO:
+    },
     goToNextBattle() {
+      this.saveResult();
       let res = this.db.doc('rooms/' + this.roomId).update({
         now: this.roomData.now + 1,
       }).then(function () {
@@ -561,6 +569,7 @@ export default {
         await batch.commit();
       })();
 
+      this.saveResult();
       //部屋の削除
       let res = this.db.doc('rooms/' + this.roomId).delete().then(function () {
         return true;
