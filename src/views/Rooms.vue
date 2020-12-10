@@ -14,8 +14,7 @@
       </div>
       <v-row>
         <v-col v-for="(room, key) of rooms" :key="key" cols="6" class="col-md-4">
-          <v-card v-if="room.recruitment || (room.owner == store.user.uid || room.children.includes(store.user.uid))"
-                  @click="intoRoom(room, key)" style="border-top-width: 4px; border-top-style: solid;"
+          <v-card @click="intoRoom(room, key)" style="border-top-width: 4px; border-top-style: solid;"
                   :style="
                       room.owner == store.user.uid ? {borderTopColor: store.colors.secondary} :
                       room.children.includes(store.user.uid) ? {borderTopColor: store.colors.info} :
@@ -135,7 +134,10 @@ export default {
             console.log("changed rooms");
             let rooms = {};
             querySnapshot.forEach(function (doc) {
-              rooms[doc.id] = doc.data();
+              let room = doc.data();
+              if (room.recruitment || (room.owner == self.store.user.uid || room.children.includes(self.store.user.uid))) {
+                rooms[doc.id] = room;
+              }
             });
             self.rooms = rooms;
           });

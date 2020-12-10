@@ -28,14 +28,14 @@ firebase.analytics();
 
 firebase.auth().onAuthStateChanged(user => {
     if (user) {
-        console.log(user.uid);
+        console.log("login");
         Vue.prototype.store.user = user;
         let db = firebase.firestore();
         //ユーザ登録 最終ログイン更新
         db.doc('users/' + user.uid).set({
             id: user.uid,
             last: firebase.firestore.FieldValue.serverTimestamp(),
-        }).then(function () {
+        }, {merge: true}).then(function () {
         }).catch(function (err) {
             console.log(err);
             Vue.prototype.store.messages.push(

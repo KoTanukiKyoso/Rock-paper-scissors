@@ -82,7 +82,7 @@
         </v-row>
       </div>
       <v-row class="mt-3">
-        <!--じゃんけんぽん-->
+        <!--じゃんけんぽんアニメ-->
         <v-col v-if="room.ofNow == 0" cols="12" style="position: relative;" class="my-3 mx-auto">
           <template v-for="(word, i) of animations.rsp.words">
             <transition :key="i" :name="animations.rsp.animationType" mode="out-in"
@@ -133,27 +133,29 @@
           <v-card class="mx-5 mx-auto" style="min-height: 300px;" elevation="2">
             <v-card-title class="font-weight-bold pb-1">チャット</v-card-title>
             <v-divider/>
-            <div id="chatContainer" class="px-3 py-1 grey lighten-3" style="height: 300px; overflow-y: auto;">
-              <v-card v-for="message of messages" :key="message.key" class="my-1">
-                <v-card-title v-if="store.user.uid == message.uid" class="py-2">
-                  <v-avatar color="primary" size="30">
-                    <span class="white--text subtitle-2">自</span>
-                  </v-avatar>
-                  <span class="px-2 subtitle-1 font-weight-bold">あなた</span>
-                </v-card-title>
-
-                <v-card-title v-else-if="room.owner == message.uid" class="py-2">
-                  <v-avatar color="secondary" size="30">
-                    <span class="white--text subtitle-2">親</span>
-                  </v-avatar>
-                  <span class="px-2 subtitle-1 font-weight-bold">オーナー</span>
-                </v-card-title>
-
-                <v-card-title v-else class="py-2">
-                  <v-avatar color="indigo" size="30">
-                    <span class="white--text subtitle-2">{{ message.name }}</span>
-                  </v-avatar>
-                  <span class="px-2 subtitle-1">{{ message.uid }}</span>
+            <div id="chatContainer" class="pa-1 pt-0 grey lighten-3" style="height: 300px; overflow-y: auto;">
+              <v-card v-for="message of messages" :key="message.key" class="pt-1 mt-1">
+                <v-card-title class="py-1">
+                  <template v-if="store.user.uid == message.uid">
+                    <v-avatar color="primary" size="30">
+                      <span class="white--text subtitle-2">自</span>
+                    </v-avatar>
+                    <span class="px-2 subtitle-1 font-weight-bold">あなた</span>
+                  </template>
+                  <template v-else-if="room.owner == message.uid">
+                    <v-avatar color="secondary" size="30">
+                      <span class="white--text subtitle-2">親</span>
+                    </v-avatar>
+                    <span class="px-2 subtitle-1 font-weight-bold">オーナー</span>
+                  </template>
+                  <template v-else>
+                    <v-avatar color="indigo" size="30">
+                      <span class="white--text subtitle-2">{{ message.shortName }}</span>
+                    </v-avatar>
+                    <span class="px-2 subtitle-1">{{ message.name }}</span>
+                  </template>
+                  <v-spacer/>
+                  <small style="text-align: end; font-size: 12px; color: #999;">{{timestampToTime(message.timestamp.seconds) }}</small>
                 </v-card-title>
 
                 <v-card-text>
@@ -161,7 +163,6 @@
                 </v-card-text>
               </v-card>
             </div>
-
             <v-divider></v-divider>
             <v-card-actions>
               <v-row class="px-2">
@@ -250,7 +251,8 @@ export default {
           }
         ]
       }
-    }
+    },
+    results: [],
   }),
   created: function () {
     console.log("created battle room");
@@ -338,6 +340,16 @@ export default {
     },
   },
   methods: {
+    timestampToTime(timestamp) {
+      const date = new Date(timestamp * 1000);
+      const yyyy = `${date.getFullYear()}`;
+      const MM = `0${date.getMonth() + 1}`.slice(-2);
+      const dd = `0${date.getDate()}`.slice(-2);
+      const HH = `0${date.getHours()}`.slice(-2);
+      const mm = `0${date.getMinutes()}`.slice(-2);
+      const ss = `0${date.getSeconds()}`.slice(-2);
+      return `${yyyy}/${MM}/${dd} ${HH}:${mm}:${ss}`;
+    },
     getResults() {
       if (!this.room.results[this.room.now]) {
         return false;
@@ -434,42 +446,40 @@ export default {
       //既入室確認
       if (this.room.owner == this.store.user.uid) {
         this.isOwner = true;
-        await this.listenMessage();
-        return;
-      }
-      if (this.room.children.includes(this.store.user.uid)) {
-        await this.listenMessage();
-        return;
-      }
+      } else if (this.room.children.includes(this.store.user.uid)) {
+        console.log("");
+      } else {
+        //入室してない場合空きがあって鍵部屋でなければ入室
+        if (this.room.lock || this.room.children.length >= this.room.numOfChildren) {
+          this.store.messages.push(
+              {text: "この部屋は既に一杯です．"}
+          );
+          await this.$router.push("/rooms");
+          return;
+        }
 
-      //入室してない場合空きがあって鍵部屋でなければ入室
-      if (this.room.lock || this.room.children.length >= this.room.numOfChildren) {
-        this.store.messages.push(
-            {text: "この部屋は既に一杯です．"}
-        );
-        await this.$router.push("/rooms");
-        return;
-      }
-
-      //入室処理
-      let self = this;
-      //登録
-      let res = this.db.doc('rooms/' + this.roomId).update({
-        children: self.store.firebase.firestore.FieldValue.arrayUnion(self.store.user.uid),
-      }).then(function () {
-        return true;
-      }).catch(function (err) {
-        console.log(err);
-        return false;
-      });
-      if (!res) {
-        this.store.messages.push({text: "入室に失敗しました．通信が混雑している可能性があります．"});
-        await this.$router.push("/battleRoom?id=" + this.roomId);
-        return;
+        //入室処理
+        let self = this;
+        //登録
+        let res = this.db.doc('rooms/' + this.roomId).update({
+          children: self.store.firebase.firestore.FieldValue.arrayUnion(self.store.user.uid),
+        }).then(function () {
+          return true;
+        }).catch(function (err) {
+          console.log(err);
+          return false;
+        });
+        if (!res) {
+          this.store.messages.push({text: "入室に失敗しました．通信が混雑している可能性があります．"});
+          await this.$router.push("/battleRoom?id=" + this.roomId);
+          return;
+        }
       }
 
       //チャット取得処理
-      await this.listenMessage();
+      this.listenMessage();
+      //結果取得
+      this.listenResults();
     },
     listenMessage() {
       console.log("listenMessage");
@@ -492,11 +502,29 @@ export default {
           });
       this.store.listeners.push(listener);
     },
+    listenResults() {
+      console.log("listen results");
+      let self = this;
+      let listener = this.db.collection("results").where("room", "==", this.roomId)
+          .orderBy("timestamp", "desc").limit(100)
+          .onSnapshot(function (querySnapshot) {
+            console.log("results changed");
+            let results = [];
+            querySnapshot.forEach(function (doc) {
+              let data = doc.data();
+              data.key = doc.id;
+              results.unshift(data);
+            });
+            self.results = results;
+          });
+      this.store.listeners.push(listener);
+    },
     async onChangeRoomState() {
       console.log("onChangeRoomState");
       if (this.now != this.room.now) {
         this.now = this.room.now;
         this.$nextTick(() => {
+          console.log("go animation");
           this.animations.rsp.animation = 0;
         });
       }
@@ -569,39 +597,63 @@ export default {
         return false;
       });
     },
-    async saveResult() {
-      if (!this.isOwner) {
-        return;
-      }
-      //TODO:
-      if (this.room.rematchAiko) {
-        console.log(1);
-      } else {
-        console.log(2);
-      }
-    },
-    async saveResultAll() {
+    async saveResult() {//その回の結果を保存
       if (!this.isOwner) {
         return;
       }
 
       let batch = this.db.batch();
       let rr = this.room.results[this.room.now];
-      for (let key in rr) {
-        let ref = this.db.collection("rooms").doc(key);
-        let result = rr[key];
-        let arr = {
-          owner: this.store.user.uid,
-          ownerName: "",
-          ownerHand: this.room,
-          uid: key,
-          userName: "",
-          userHand: result.hand,
-          ofNow: result.ofNow
-        };
-        batch.set(ref, {results: arr}, {merge: true});
+      let ref = this.db.collection("results");
+      if (this.room.rematchAiko) {
+        //あいこ時再対戦，最後のあいこは埋めて送信
+        for (let key in rr) {
+          if (key != this.room.owner) {
+            let doc = ref.doc();
+            let result = rr[key];
+            let arr = {
+              time: this.room.now,
+              room: this.roomId,
+              owner: this.store.user.uid,
+              ownerName: "owner",
+              ownerHand: result.owner,
+              uid: key,
+              userName: "user",
+              userHand: result.hand,
+              ofNow: result.ofNow,
+              timestamp: this.store.firebase.firestore.FieldValue.serverTimestamp(),
+            };
+            if (!result.owner && !result.done && result.ofNow == this.room.ofNow) {//結果未保存
+              arr.ownerHand = this.getOwnerHand();
+              batch.set(doc, arr);
+            } else if (result.done) {
+              batch.set(doc, arr);
+            }
+          }
+        }
+      } else {
+        //すべてそのまま補完して送信
+        for (let key in rr) {
+          if (key != this.room.owner) {
+            let doc = ref.doc();
+            let result = rr[key];
+            let arr = {
+              time: this.room.now,
+              room: this.roomId,
+              owner: this.store.user.uid,
+              ownerName: "owner",
+              ownerHand: this.getOwnerHand(),
+              uid: key,
+              userName: "user",
+              userHand: result.hand,
+              ofNow: 0,
+              timestamp: this.store.firebase.firestore.FieldValue.serverTimestamp(),
+            };
+            batch.set(doc, arr);
+          }
+        }
       }
-      batch.commit().then(function () {
+      await batch.commit().then(function () {
         console.log("success");
       }).catch(function (err) {
         console.log(err);
@@ -614,8 +666,9 @@ export default {
         return;
       }
       await this.saveResult();
-      let res = this.db.doc('rooms/' + this.roomId).update({
-        now: this.room.now + 1,
+
+      let res = await this.db.doc('rooms/' + this.roomId).update({
+        ofNow: 0,
       }).then(function () {
         return true;
       }).catch(function (err) {
@@ -628,7 +681,7 @@ export default {
       }
 
       res = this.db.doc('rooms/' + this.roomId).update({
-        ofNow: 0,
+        now: this.room.now + 1,
       }).then(function () {
         return true;
       }).catch(function (err) {
@@ -647,7 +700,8 @@ export default {
       let res = await this.db.collection("messages").add({
         room: this.roomId,
         uid: this.store.user.uid,
-        name: this.store.user.uid.substr(0, 2),
+        name: this.store.user.displayName || "名無し",//this.store.user.uid.substr(0, 2)
+        shortName: (this.store.user.displayName || "名無し").substr(0, 2),
         text: this.chatText,
         timestamp: this.store.firebase.firestore.FieldValue.serverTimestamp(),
       }).then(function (ref) {
