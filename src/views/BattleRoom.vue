@@ -281,6 +281,9 @@ export default {
     handCheck: function () {
       return function (hand) {
         console.log("handCheck");
+        if (!this.room.hands[hand].checked) {
+          return false;
+        }
         if (this.room.now < 0) {
           return true;
         }
@@ -312,7 +315,8 @@ export default {
       }
       for (let key in result) {
         let res = result[key];
-        if (res && this.room.ofNow == res.ofNow && res.hand == result[this.store.user.uid].hand && key != this.room.owner) {
+        if (res && this.room && this.room.ofNow == res.ofNow &&
+            res.hand == result[this.store.user.uid].hand && key != this.room.owner) {
           return true;
         }
       }
@@ -327,7 +331,7 @@ export default {
         return true;
       }
       //自分のデータのofNowが最新
-      if (results[this.store.user.uid].ofNow == this.room.ofNow) {
+      if (this.getMyResult() && this.getMyResult().ofNow == this.room.ofNow) {
         return true;
       }
       return false;
@@ -339,6 +343,12 @@ export default {
         return false;
       }
       return {...this.room.results[this.room.now]};
+    },
+    getMyResult() {
+      if (!this.getResults() || !this.getResults()[this.store.user.uid]) {
+        return false;
+      }
+      return this.getResults()[this.store.user.uid];
     },
     getOwnerHand() {
       return this.getResults()[this.room.owner].hand;
@@ -499,7 +509,9 @@ export default {
       if (this.room.results[this.room.now] && this.room.results[this.room.now][this.store.user.uid]) {
         return;
       }
-      console.log(hand);
+      if (!this.handCheck(hand)) {
+        return;
+      }
       let arr = {};
       arr[this.room.now] = {};
       arr[this.room.now][this.store.user.uid] = {
@@ -558,7 +570,15 @@ export default {
       });
     },
     async saveResult() {
-
+      if (!this.isOwner) {
+        return;
+      }
+      //TODO:
+      if (this.room.rematchAiko) {
+        console.log(1);
+      } else {
+        console.log(2);
+      }
     },
     async saveResultAll() {
       if (!this.isOwner) {
