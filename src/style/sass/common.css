@@ -84,4 +84,8 @@ body {
   min-height: calc(100vh - 50px);
 }
 
+.pointer {
+  cursor: pointer;
+}
+
 /*# sourceMappingURL=common.css.map */

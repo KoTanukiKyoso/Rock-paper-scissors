@@ -106,7 +106,7 @@
               <v-col @click="selectHand(key)" v-for="(hand, key) of hands" :key="key" v-ripple class="px-1 px-md-2">
                 <v-card style="text-align: center; border-style: solid; border-width: 4px;" shaped elevation="5"
                         :style="handCheck(key) ? {borderColor: hand.color, color: hand.color} : {borderColor: '#999', color: '#999'}"
-                        class="py-10"
+                        class="py-10 pointer"
                         :class="{ 'display-3': $vuetify.breakpoint.smAndDown, 'display-4': $vuetify.breakpoint.mdAndUp }">
                   <v-icon style="font-size: inherit; color: inherit;">{{ hand.icon }}</v-icon>
                 </v-card>
@@ -117,12 +117,23 @@
       </v-row>
 
       <!--チャット-->
-      <v-row style="max-width: 500px;">
-        <v-col cols="12">
-          <v-card class="ma-5 mx-auto" style="min-height: 300px;">
+      <v-row class="mt-3">
+        <v-col cols="12" class="col-md-6">
+          <v-card class="mx-5 mx-auto" style="min-height: 300px;" elevation="2">
+            <v-card-title class="font-weight-bold pb-1">じゃんけん結果</v-card-title>
+            <v-divider/>
+            <div class="px-3 py-1 grey lighten-3" style="height: 300px; overflow-y: auto;">
+              <v-card class="my-1">
+
+              </v-card>
+            </div>
+          </v-card>
+        </v-col>
+        <v-col cols="12" class="col-md-6">
+          <v-card class="mx-5 mx-auto" style="min-height: 300px;" elevation="2">
             <v-card-title class="font-weight-bold pb-1">チャット</v-card-title>
             <v-divider/>
-            <div id="chatContainer" class="px-3 py-1" style="height: 300px; overflow-y: auto;">
+            <div id="chatContainer" class="px-3 py-1 grey lighten-3" style="height: 300px; overflow-y: auto;">
               <v-card v-for="message of messages" :key="message.key" class="my-1">
                 <v-card-title v-if="store.user.uid == message.uid" class="py-2">
                   <v-avatar color="primary" size="30">
@@ -260,6 +271,7 @@ export default {
   computed: {
     isEndAnimation: function () {
       return function (anime) {
+        console.log("isEndAnimation");
         if (anime.words.length - 1 <= anime.animation) {
           return true;
         }
@@ -268,6 +280,7 @@ export default {
     },
     handCheck: function () {
       return function (hand) {
+        console.log("handCheck");
         if (this.room.now < 0) {
           return true;
         }
@@ -287,6 +300,7 @@ export default {
       }
     },
     isAiko: function () {
+      console.log("isAiko");
       let result = this.room.results[this.room.now];
       //まだ手を出していない
       if (!result || !result[this.store.user.uid]) {
@@ -296,28 +310,39 @@ export default {
       if (!this.room.rematchAiko) {
         return false;
       }
-      // console.log(123);
       for (let key in result) {
         let res = result[key];
-        if (this.room.ofNow == res.ofNow && res.hand == result[this.store.user.uid].hand && key != this.room.owner) {
-          // console.log(1234);
+        if (res && this.room.ofNow == res.ofNow && res.hand == result[this.store.user.uid].hand && key != this.room.owner) {
           return true;
         }
       }
-      // console.log(12345);
       return false;
     },
     isAikoUser: function () {
+      console.log("isAikoUser");
+      let results = this.getResults();
       //あいこユーザの条件
       //自分のじゃんけんデータがnullである
-      if (this.room && this.room.results[this.room.now] &&
-          this.room.results[this.room.now][this.store.user.uid] === null) {
+      if (this.room && results && results[this.store.user.uid] === null) {
+        return true;
+      }
+      //自分のデータのofNowが最新
+      if (results[this.store.user.uid].ofNow == this.room.ofNow) {
         return true;
       }
       return false;
     },
   },
   methods: {
+    getResults() {
+      if (!this.room.results[this.room.now]) {
+        return false;
+      }
+      return {...this.room.results[this.room.now]};
+    },
+    getOwnerHand() {
+      return this.getResults()[this.room.owner].hand;
+    },
     GetURLGet() {
       let url = location.href;
       let result = {};
@@ -341,6 +366,7 @@ export default {
       return result;
     },
     nextAnime(anime) {
+      console.log("nextAnime");
       setTimeout(() => {
         if (anime.animation < anime.words.length - 1) {
           anime.animation++;
@@ -348,6 +374,7 @@ export default {
       }, anime.span);
     },
     async intoRoom() {
+      console.log("intoRoom");
       let self = this;
       let gets = this.GetURLGet();
       if (!gets.id) {
@@ -385,6 +412,7 @@ export default {
       this.store.listeners.push(listener);
     },
     async checkRoom() {
+      console.log("checkRoom");
       if (!this.room) {
         this.store.messages.push(
             {text: "部屋が存在しないか削除済みです．"}
@@ -455,6 +483,7 @@ export default {
       this.store.listeners.push(listener);
     },
     async onChangeRoomState() {
+      console.log("onChangeRoomState");
       if (this.now != this.room.now) {
         this.now = this.room.now;
         this.$nextTick(() => {
@@ -463,6 +492,7 @@ export default {
       }
     },
     async selectHand(hand) {
+      console.log("selectHand");
       if (this.room.now < 0) {
         return;
       }
@@ -476,8 +506,8 @@ export default {
         hand: hand,
         owner: "",
         ofNow: this.room.ofNow,
+        done: false
       };
-      console.log(arr);
       let res = this.db.doc('rooms/' + this.roomId).set({
         results: arr,
       }, {merge: true}).then(function () {
@@ -492,19 +522,30 @@ export default {
       }
     },
     aikoRematch() {
+      console.log("aikoRematch");
+      let ownerHand = this.getOwnerHand();
+      let rr = this.getResults();
+
       let batch = this.db.batch();
 
+      //ofNow更新
       let nycRef = this.db.collection("rooms").doc(this.roomId);
       batch.update(nycRef, {ofNow: this.room.ofNow + 1});
 
-      let rr = this.room.results[this.room.now];
       for (let key in rr) {
         let result = rr[key];
+        let arr = {};
+        arr[this.room.now] = {};
         //今試合あいこなら
         if (result.ofNow == this.room.ofNow && result.hand == rr[this.room.owner].hand) {
-          let arr = {};
-          arr[this.room.now] = {};
+          //あいこ用にあいこ者の現データ破棄
           arr[this.room.now][key] = null;
+          batch.set(nycRef, {results: arr}, {merge: true});
+        } else if (!result.done) {
+          //あいこ者以外の結果の確定
+          arr[this.room.now][key] = {};
+          arr[this.room.now][key].done = true;
+          arr[this.room.now][key].owner = ownerHand;
           batch.set(nycRef, {results: arr}, {merge: true});
         }
       }
@@ -516,11 +557,43 @@ export default {
         return false;
       });
     },
-    saveResult() {
-      //TODO:
+    async saveResult() {
+
     },
-    goToNextBattle() {
-      this.saveResult();
+    async saveResultAll() {
+      if (!this.isOwner) {
+        return;
+      }
+
+      let batch = this.db.batch();
+      let rr = this.room.results[this.room.now];
+      for (let key in rr) {
+        let ref = this.db.collection("rooms").doc(key);
+        let result = rr[key];
+        let arr = {
+          owner: this.store.user.uid,
+          ownerName: "",
+          ownerHand: this.room,
+          uid: key,
+          userName: "",
+          userHand: result.hand,
+          ofNow: result.ofNow
+        };
+        batch.set(ref, {results: arr}, {merge: true});
+      }
+      batch.commit().then(function () {
+        console.log("success");
+      }).catch(function (err) {
+        console.log(err);
+        return false;
+      });
+    },
+    async goToNextBattle() {
+      console.log("goToNextBattle");
+      if (!this.isOwner) {
+        return;
+      }
+      await this.saveResult();
       let res = this.db.doc('rooms/' + this.roomId).update({
         now: this.room.now + 1,
       }).then(function () {
@@ -570,6 +643,7 @@ export default {
       }
     },
     async closeRoom() {
+      console.log("closeRoom");
       if (this.room.owner != this.store.user.uid) {
         return;
       }
@@ -608,11 +682,8 @@ export default {
         await batch.commit();
       })();
 
-      this.saveResult();
-      // let test = true;
-      // if(true == test){
-      //   return;
-      // }
+      await this.saveResult();
+
       //部屋の削除
       let res = this.db.doc('rooms/' + this.roomId).delete().then(function () {
         return true;
@@ -628,6 +699,7 @@ export default {
       }
     },
     async exitRoom() {
+      console.log("exitRoom");
       let rr = await this.$swal(
           {
             title: "本当に部屋を退出しますか？",
