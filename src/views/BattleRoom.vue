@@ -30,7 +30,12 @@
         </div>
         <v-spacer></v-spacer>
         <div v-if="room.now" class="d-inline-block pr-2">
-          第 <span class=" font-weight-bold primary--text">{{ room.now }} / {{ room.numOfBattle }}</span> 回戦
+          <template v-if="room.now > room.numOfBattle">
+            <span class="font-weight-bold primary--text">全じゃんけん終了</span>
+          </template>
+          <template v-else>
+            第 <span class="font-weight-bold primary--text">{{ room.now }} / {{ room.numOfBattle }}</span> 回戦
+          </template>
         </div>
       </v-row>
 
@@ -39,10 +44,10 @@
           <h3>あなたが親です</h3>
           <v-col cols="12">
             <v-btn v-if="room.recruitment" @click="closeRecruit" x-large color="primary">募集を締め切る</v-btn>
-            <v-btn v-else-if="room.now < room.numOfBattle" @click="goToNextBattle" x-large color="primary">
+            <v-btn v-else-if="room.now <= room.numOfBattle" @click="goToNextBattle" x-large color="primary">
               次のじゃんけんに進む
             </v-btn>
-            <v-btn v-else-if="room.now >= room.numOfBattle" @click="closeRoom" x-large color="primary">対戦を終了する
+            <v-btn v-else-if="room.now > room.numOfBattle" @click="closeRoom" x-large color="primary">対戦を終了する
             </v-btn>
             <v-btn v-if="isAiko" @click="aikoRematch" x-large color="secondary ml-2">あいこでしょ</v-btn>
           </v-col>
@@ -81,7 +86,7 @@
           </transition>
         </v-row>
       </div>
-      <v-row class="mt-3">
+      <v-row class="mt-3" v-if="room.now && room.now <= room.numOfBattle">
         <!--じゃんけんぽんアニメ-->
         <v-col v-if="room.ofNow == 0" cols="12" style="position: relative;" class="my-3 mx-auto">
           <template v-for="(word, i) of animations.rsp.words">
@@ -116,19 +121,44 @@
         </transition>
       </v-row>
 
-      <!--チャット-->
+      <!--チャット 結果-->
       <v-row class="mt-3">
+        <!--じゃんけん結果-->
         <v-col cols="12" class="col-md-6">
           <v-card class="mx-5 mx-auto" style="min-height: 300px;" elevation="2">
             <v-card-title class="font-weight-bold pb-1">じゃんけん結果</v-card-title>
             <v-divider/>
-            <div class="px-3 py-1 grey lighten-3" style="height: 300px; overflow-y: auto;">
-              <v-card class="my-1">
-
+            <div class="pa-1 pt-0 grey lighten-3" style="height: 300px; overflow-y: auto;">
+              <v-card v-for="result of results" :key="result.key" class="pt-1 mt-1">
+                <v-card-subtitle v-if="result.timestamp" class="pt-1 pb-0">
+                  <span>第{{ result.time }}回 じゃんけん結果</span>
+                  <span class="ml-4 d-inline-block">{{ timestampToTime(result.timestamp.seconds) }}</span>
+                </v-card-subtitle>
+                <v-card-title class="py-0">
+                  <span class="px-2 d-inline-block" :style="calcWinner(result) == 1 ? {color: '#2266ff'} :
+                  calcWinner(result) == 2 ? {color: '#44aa44'} : calcWinner(result) == 3 ? {color: '#ff4455'} : {color: '#666'}">
+                    {{ result.ownerName }}
+                  </span>
+                  vs
+                  <span class="px-2 d-inline-block" :style="calcWinner(result) == 1 ? {color: '#ff4455'} :
+                  calcWinner(result) == 2 ? {color: '#44aa44'} : calcWinner(result) == 3 ? {color: '#2266ff'} : {color: '#666'}">
+                    {{ result.userName }}
+                  </span>
+                </v-card-title>
+                <v-card-text>
+                  <span>結果：
+                  <template v-if="calcWinner(result) == 1">{{ result.userName }}の勝ち</template>
+                  <template v-if="calcWinner(result) == 2">あいこ</template>
+                  <template v-if="calcWinner(result) == 3">{{ result.ownerName }}の勝ち</template>
+                  </span>
+                  <span>あいこ{{ result.ofNow }}回</span>
+                </v-card-text>
               </v-card>
             </div>
           </v-card>
         </v-col>
+
+        <!--チャット-->
         <v-col cols="12" class="col-md-6">
           <v-card class="mx-5 mx-auto" style="min-height: 300px;" elevation="2">
             <v-card-title class="font-weight-bold pb-1">チャット</v-card-title>
@@ -155,7 +185,9 @@
                     <span class="px-2 subtitle-1">{{ message.name }}</span>
                   </template>
                   <v-spacer/>
-                  <small style="text-align: end; font-size: 12px; color: #999;">{{timestampToTime(message.timestamp.seconds) }}</small>
+                  <small v-if="message.timestamp" style="text-align: end; font-size: 12px; color: #999;">{{
+                      timestampToTime(message.timestamp.seconds)
+                    }}</small>
                 </v-card-title>
 
                 <v-card-text>
@@ -350,6 +382,42 @@ export default {
       const ss = `0${date.getSeconds()}`.slice(-2);
       return `${yyyy}/${MM}/${dd} ${HH}:${mm}:${ss}`;
     },
+    calcWinner(result) {
+      if (result.ownerHand == result.userHand) {
+        return 2;
+      }
+      switch (result.ownerHand) {
+        case "rock":
+          if (result.userHand == "paper") {
+            return 1;
+          } else if (result.userHand == "scissors") {
+            return 3;
+          } else {
+            return -1;
+          }
+
+        case "scissors":
+          if (result.userHand == "rock") {
+            return 1;
+          } else if (result.userHand == "paper") {
+            return 3;
+          } else {
+            return -1;
+          }
+
+        case "paper":
+          if (result.userHand == "scissors") {
+            return 1;
+          } else if (result.userHand == "rock") {
+            return 3;
+          } else {
+            return -1;
+          }
+
+        default:
+          return -1;
+      }
+    },
     getResults() {
       if (!this.room.results[this.room.now]) {
         return false;
@@ -516,6 +584,7 @@ export default {
               results.unshift(data);
             });
             self.results = results;
+            console.log(results);
           });
       this.store.listeners.push(listener);
     },
@@ -545,8 +614,10 @@ export default {
       arr[this.room.now][this.store.user.uid] = {
         hand: hand,
         owner: "",
+        ownerName: "owner",
         ofNow: this.room.ofNow,
-        done: false
+        done: false,
+        userName: this.store.user.displayName || "名無し",
       };
       let res = this.db.doc('rooms/' + this.roomId).set({
         results: arr,
@@ -601,7 +672,6 @@ export default {
       if (!this.isOwner) {
         return;
       }
-
       let batch = this.db.batch();
       let rr = this.room.results[this.room.now];
       let ref = this.db.collection("results");
@@ -612,13 +682,14 @@ export default {
             let doc = ref.doc();
             let result = rr[key];
             let arr = {
+              roomName: this.room.roomName,
               time: this.room.now,
               room: this.roomId,
               owner: this.store.user.uid,
-              ownerName: "owner",
+              ownerName: this.store.user.displayName,
               ownerHand: result.owner,
               uid: key,
-              userName: "user",
+              userName: result.userName,
               userHand: result.hand,
               ofNow: result.ofNow,
               timestamp: this.store.firebase.firestore.FieldValue.serverTimestamp(),
@@ -638,13 +709,14 @@ export default {
             let doc = ref.doc();
             let result = rr[key];
             let arr = {
+              roomName: this.room.roomName,
               time: this.room.now,
               room: this.roomId,
               owner: this.store.user.uid,
-              ownerName: "owner",
+              ownerName: this.store.user.displayName,
               ownerHand: this.getOwnerHand(),
               uid: key,
-              userName: "user",
+              userName: result.userName,
               userHand: result.hand,
               ofNow: 0,
               timestamp: this.store.firebase.firestore.FieldValue.serverTimestamp(),
@@ -701,7 +773,7 @@ export default {
         room: this.roomId,
         uid: this.store.user.uid,
         name: this.store.user.displayName || "名無し",//this.store.user.uid.substr(0, 2)
-        shortName: (this.store.user.displayName || "名無し").substr(0, 2),
+        shortName: this.store.user.uid.substr(0, 2),
         text: this.chatText,
         timestamp: this.store.firebase.firestore.FieldValue.serverTimestamp(),
       }).then(function (ref) {
@@ -756,7 +828,7 @@ export default {
         await batch.commit();
       })();
 
-      await this.saveResult();
+      // await this.saveResult();
 
       //部屋の削除
       let res = this.db.doc('rooms/' + this.roomId).delete().then(function () {
