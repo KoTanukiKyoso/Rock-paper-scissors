@@ -1,33 +1,30 @@
 <template>
-  <v-card class="rounded-b-xl d-block" color="primary">
-    <v-row style="align-items: center;">
-      <v-col cols="12" class="col-sm-7 py-sm-4 py-1 pl-5">
-        <Fa :icon="faHandPeace" fw size="2x" class="secondary--text"/>
-        <router-link to="/">
-          <h2 class="white--text d-inline-block">{{ msg }}</h2>
-        </router-link>
-        <Fa :icon="faHandPeace" fw size="2x" class="secondary--text hidden-xs-only"/>
-      </v-col>
-      <v-col cols="12" class="col-sm-5 py-sm-4 py-1">
-        <div class="white--text px-3" style="text-align: end;">
-          <h3 v-if="!nameEdit" class="d-inline-block pr-2">
-            {{ userName }}
-            <v-icon color="white" class="ml-2" @click="nameEdit = true">mdi-pencil</v-icon>
-          </h3>
-          <div v-else>
-            <v-text-field solo v-model="userName" @keyup.enter="updateName" class="d-inline-block"
-                          style="width: 150px;"></v-text-field>
-            <v-btn color="white" icon @click="nameEdit = false">
-              <v-icon>mdi-close-thick</v-icon>
-            </v-btn>
-            <v-btn color="white" icon @click="updateName">
-              <v-icon>mdi-circle-outline</v-icon>
-            </v-btn>
-          </div>
+  <!--  <v-card>-->
+  <v-app-bar app class="rounded-b-xl" absolute color="primary" >
+    <v-toolbar-title :style="$vuetify.breakpoint.smAndDown ? {fontSize: '14px'} : {fontSize: '18px'}">
+      <Fa :icon="faHandPeace" fw size="2x" class="secondary--text hidden-xs-only"/>
+      <router-link to="/">
+        <h2 class="white--text d-inline-block">{{ msg }}</h2>
+      </router-link>
+      <Fa :icon="faHandPeace" fw size="2x" class="secondary--text hidden-xs-only"/>
+    </v-toolbar-title>
+    <v-spacer/>
+    <div class="white--text px-1 px-sm-3" style="text-align: end;">
+      <h3 v-if="!nameEdit" class="d-inline-block pr-2">
+        {{ userName }}
+        <v-icon color="white" class="ml-2" @click="nameEdit = true">mdi-pencil</v-icon>
+      </h3>
+      <div v-else>
+        <input type="text" v-model="userName" @keyup.enter="updateName" class="d-inline-block"
+               style="width: 120px; background: white; border-radius: 5px; font-size: 18px; padding-left: 10px;">
+        <div class="d-inline-block">
+          <v-icon color="white" @click="nameEdit = false">mdi-close-thick</v-icon>
+          <v-icon color="white" @click="updateName">mdi-circle-outline</v-icon>
         </div>
-      </v-col>
-    </v-row>
-  </v-card>
+      </div>
+    </div>
+  </v-app-bar>
+  <!--  </v-card>-->
 </template>
 
 <script>

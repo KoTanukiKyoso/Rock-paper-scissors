@@ -11,6 +11,7 @@ import VueSweetalert2 from 'vue-sweetalert2';
 
 import "./components/parts/vDiv";
 import "./components/parts/Alert";
+import './registerServiceWorker'
 
 // initialize Firebase
 let config = {

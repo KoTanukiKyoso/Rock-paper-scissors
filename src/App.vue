@@ -123,9 +123,18 @@
 .downup_length-leave {
   opacity: 1;
 }
+
+
+@media screen and (max-width: 400px) {
+  .v-toolbar__content{
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
 </style>
 <template>
-  <v-app>
+  <v-app class="primary lighten-1">
     <Header msg="ジャンケン Online"/>
 
     <transition name="fromLeft" mode="out-in">

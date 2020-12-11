@@ -3,13 +3,13 @@
     <v-container class="d-flex flex-column pa-0" style="align-items: stretch; height: 100%;">
       <div>
         <v-row class="py-1 px-4 white--text">
-          <v-col cols="4">
+          <v-col class="col-sm-3" cols="5">
             <router-link to="/" class="white--text">
               <Fa :icon="faArrowLeft" fw size="lg"/>
             </router-link>
           </v-col>
           <v-spacer></v-spacer>
-          <v-col class="" align="end" cols="4">
+          <v-col class="col-sm-5" align="end" cols="7">
             {{title.main}}
           </v-col>
         </v-row>
