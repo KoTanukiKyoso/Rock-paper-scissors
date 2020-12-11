@@ -125,10 +125,10 @@
       <v-row class="mt-3">
         <!--じゃんけん結果-->
         <v-col cols="12" class="col-md-6">
-          <v-card class="mx-5 mx-auto" style="min-height: 300px;" elevation="2">
+          <v-card class="mx-5 mx-auto" style="min-height: 300px;" elevation="4">
             <v-card-title class="font-weight-bold pb-1">じゃんけん結果</v-card-title>
             <v-divider/>
-            <div class="pa-1 pt-0 grey lighten-3" style="height: 300px; overflow-y: auto;">
+            <div class="px-1 pb-2 pt-0 grey lighten-3" style="max-height: 500px; min-height: 300px; overflow-y: auto;">
               <v-card v-for="result of results" :key="result.key" class="pt-1 mt-1">
                 <v-card-subtitle v-if="result.timestamp" class="pt-1 pb-0">
                   <span>第{{ result.time }}回 じゃんけん結果</span>
@@ -145,13 +145,13 @@
                     {{ result.userName }}
                   </span>
                 </v-card-title>
-                <v-card-text>
-                  <span>結果：
+                <v-card-text class="pb-2">
+                  <span style="color: #333;" class="font-weight-bold">結果：
                   <template v-if="calcWinner(result) == 1">{{ result.userName }}の勝ち</template>
                   <template v-if="calcWinner(result) == 2">あいこ</template>
                   <template v-if="calcWinner(result) == 3">{{ result.ownerName }}の勝ち</template>
-                  </span>
-                  <span>あいこ{{ result.ofNow }}回</span>
+                  </span><br>
+                  <span v-if="room.rematchAiko">あいこ{{ result.ofNow }}回</span>
                 </v-card-text>
               </v-card>
             </div>
@@ -160,7 +160,7 @@
 
         <!--チャット-->
         <v-col cols="12" class="col-md-6">
-          <v-card class="mx-5 mx-auto" style="min-height: 300px;" elevation="2">
+          <v-card class="mx-5 mx-auto" style="min-height: 300px;" elevation="4">
             <v-card-title class="font-weight-bold pb-1">チャット</v-card-title>
             <v-divider/>
             <div id="chatContainer" class="pa-1 pt-0 grey lighten-3" style="height: 300px; overflow-y: auto;">
@@ -417,6 +417,9 @@ export default {
         default:
           return -1;
       }
+    },
+    isEndGame() {
+
     },
     getResults() {
       if (!this.room.results[this.room.now]) {
