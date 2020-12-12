@@ -104,7 +104,7 @@
           <h1 style="position: absolute; top: 0; text-align: center; right: 0; left: 0;"
               class="mx-auto">あいこで しょ！</h1>
         </v-col>
-        <!--出す 手-->
+        <!--出す 手選択-->
         <transition>
           <v-col cols="12" v-if="isEndAnimation(animations.rsp) || isAikoUser" class="pa-0">
             <v-row justify="center" class="px-2 mx-auto" style="max-width: 1000px;">
@@ -119,11 +119,19 @@
             </v-row>
           </v-col>
         </transition>
+        <!--結果表示-->
+        <v-col v-if="!isOwner && room.results && room.results[room.now] && room.results[room.now][room.owner]
+          && room.results[room.now][store.user.uid]" cols="12" class="display-1" style="text-align: center;">
+          <span v-if="calcNowWinner() == 1">あなたの勝ち (*^^)v</span>
+          <span v-else-if="calcNowWinner() == 2">あいこ ( 一一)</span>
+          <span v-else-if="calcNowWinner() == 3">あなたの負け ( ;∀;)</span>
+          <span v-else>勝負無し ('_')</span>
+        </v-col>
       </v-row>
 
       <!--チャット 結果-->
       <v-row class="mt-3">
-        <!--表示-->
+        <!--待機表示-->
         <v-col cols="12" class="col-lg-3 pt-1 px-1">
           <v-card class="mx-5 mx-auto" elevation="4">
             <v-card-title class="font-weight-bold pb-1 pt-1">待機表示
@@ -166,10 +174,17 @@
 
         <!--じゃんけん結果-->
         <v-col cols="12" class="col-sm-6 col-lg-4 pt-1 px-1">
-          <v-card class="mx-5 mx-auto" style="min-height: 300px;" elevation="4">
-            <v-card-title class="font-weight-bold pb-1 pt-1">じゃんけん結果</v-card-title>
+          <v-card class="mx-5 mx-auto" style="min-height: 100px;" elevation="4">
+            <v-card-title class="font-weight-bold pb-1 pt-1">
+              じゃんけん結果
+              <v-spacer></v-spacer>
+              <small class="font-weight-regular">{{ myResultOfNow.win }}勝,{{
+                  myResultOfNow.lose
+                }}敗,{{ myResultOfNow.aiko }}分
+                /{{ (room.now - 1) > 0 ? room.now - 1 : 0 }}回</small>
+            </v-card-title>
             <v-divider/>
-            <div class="px-1 pb-2 pt-0 grey lighten-3" style="max-height: 500px; min-height: 300px; overflow-y: auto;">
+            <div class="px-1 pb-2 pt-0 grey lighten-3" style="max-height: 500px; min-height: 100px; overflow-y: auto;">
               <v-card v-for="result of results" :key="result.key" class="pt-1 mt-1">
                 <v-card-subtitle v-if="result.timestamp" class="pt-1 pb-0">
                   <span>第{{ result.time }}回 じゃんけん結果</span>
@@ -178,19 +193,25 @@
                 <v-card-title class="py-0">
                   <span class="px-2 d-inline-block" :style="calcWinner(result) == 1 ? {color: '#2266ff'} :
                   calcWinner(result) == 2 ? {color: '#44aa44'} : calcWinner(result) == 3 ? {color: '#ff4455'} : {color: '#666'}">
-                    {{ result.ownerName }}
+                    {{ result.ownerName || "名無し" }}-<v-icon class="ml-1" style="color: inherit;"
+                                                            v-if="hands[result.ownerHand]">{{
+                      hands[result.ownerHand].icon
+                    }}</v-icon>
                   </span>
                   vs
                   <span class="px-2 d-inline-block" :style="calcWinner(result) == 1 ? {color: '#ff4455'} :
                   calcWinner(result) == 2 ? {color: '#44aa44'} : calcWinner(result) == 3 ? {color: '#2266ff'} : {color: '#666'}">
-                    {{ result.userName }}
+                    {{ result.userName || "名無し" }}-<v-icon class="ml-1" style="color: inherit;"
+                                                           v-if="hands[result.userHand]">{{
+                      hands[result.userHand].icon
+                    }}</v-icon>
                   </span>
                 </v-card-title>
                 <v-card-text class="pb-2">
                   <span style="color: #333;" class="font-weight-bold">結果：
-                  <template v-if="calcWinner(result) == 1">{{ result.userName }}の勝ち</template>
+                  <template v-if="calcWinner(result) == 1">{{ result.userName || "名無し" }}の勝ち</template>
                   <template v-if="calcWinner(result) == 2">あいこ</template>
-                  <template v-if="calcWinner(result) == 3">{{ result.ownerName }}の勝ち</template>
+                  <template v-if="calcWinner(result) == 3">{{ result.ownerName || "名無し" }}の勝ち</template>
                   </span><br>
                   <span v-if="room.rematchAiko">あいこ{{ result.ofNow }}回</span>
                 </v-card-text>
@@ -201,10 +222,10 @@
 
         <!--チャット-->
         <v-col cols="12" class="col-sm-6 col-lg-5 pt-1 px-1">
-          <v-card class="mx-5 mx-auto" style="min-height: 300px;" elevation="4">
+          <v-card class="mx-5 mx-auto" style="min-height: 100px;" elevation="4">
             <v-card-title class="font-weight-bold pb-1 pt-1">チャット</v-card-title>
             <v-divider/>
-            <div id="chatContainer" class="pa-1 pt-0 grey lighten-3" style="height: 300px; overflow-y: auto;">
+            <div id="chatContainer" class="pa-1 pt-0 grey lighten-3" style="max-height: 300px; overflow-y: auto;">
               <v-card v-for="message of messages" :key="message.key" class="pt-1 mt-1">
                 <v-card-title class="py-1">
                   <template v-if="store.user.uid == message.uid">
@@ -326,6 +347,13 @@ export default {
       }
     },
     results: [],
+    myResultOfNow: {
+      win: 0,
+      aiko: 0,
+      lose: 0,
+      unearned: 0,
+      num: 0,
+    },
   }),
   created: function () {
     console.log("created battle room");
@@ -424,32 +452,43 @@ export default {
       return `${yyyy}/${MM}/${dd} ${HH}:${mm}:${ss}`;
     },
     calcWinner(result) {
-      if (result.ownerHand == result.userHand) {
+      return this.calcResult(result.ownerHand, result.userHand);
+    },
+    calcNowWinner() {
+      let ownerHand = this.getOwnerHand();
+      let myHand = this.getMyResult().hand;
+      if (!ownerHand || !myHand) {
+        return -1;
+      }
+      return this.calcResult(ownerHand, myHand);
+    },
+    calcResult(ownerHand, userHand) {
+      if (ownerHand == userHand) {
         return 2;
       }
-      switch (result.ownerHand) {
+      switch (ownerHand) {
         case "rock":
-          if (result.userHand == "paper") {
+          if (userHand == "paper") {
             return 1;
-          } else if (result.userHand == "scissors") {
+          } else if (userHand == "scissors") {
             return 3;
           } else {
             return -1;
           }
 
         case "scissors":
-          if (result.userHand == "rock") {
+          if (userHand == "rock") {
             return 1;
-          } else if (result.userHand == "paper") {
+          } else if (userHand == "paper") {
             return 3;
           } else {
             return -1;
           }
 
         case "paper":
-          if (result.userHand == "scissors") {
+          if (userHand == "scissors") {
             return 1;
-          } else if (result.userHand == "rock") {
+          } else if (userHand == "rock") {
             return 3;
           } else {
             return -1;
@@ -457,6 +496,50 @@ export default {
 
         default:
           return -1;
+      }
+    },
+    calcResults() {
+      console.log("calcResults");
+      console.log(this.results);
+      let win = 0;
+      let lose = 0;
+      let aiko = 0;
+      let num = 0;
+      if (!this.isOwner) {
+        for (let result of this.results) {
+          if (result.uid == this.store.user.uid && result.ownerHand && result.userHand) {
+            num++;
+            let v = this.calcResult(result.ownerHand, result.userHand);
+            if (v == 1) {
+              win++;
+            } else if (v == 2) {
+              aiko++;
+            } else if (v == 3) {
+              lose++;
+            }
+          }
+        }
+      } else {
+        for (let result of this.results) {
+          if (result.owner == this.store.user.uid && result.ownerHand && result.userHand) {
+            num++;
+            let v = this.calcResult(result.ownerHand, result.userHand);
+            if (v == 3) {
+              win++;
+            } else if (v == 2) {
+              aiko++;
+            } else if (v == 1) {
+              lose++;
+            }
+          }
+        }
+      }
+      this.myResultOfNow = {
+        win: win,
+        aiko: aiko,
+        lose: lose,
+        unearned: num - win - aiko - lose,
+        num: num,
       }
     },
     isEndGame() {
@@ -531,6 +614,7 @@ export default {
         return;
       }
       this.roomId = gets.id;
+      //部屋をリッスン
       let listener = await this.db.collection("rooms").doc(gets.id)
           .onSnapshot(function (doc) {
             console.log("battle room changed");
@@ -640,13 +724,17 @@ export default {
               results.unshift(data);
             });
             self.results = results;
-            console.log(results);
+            // console.log(results);
+            //結果再計算
+            self.calcResults();
           });
       this.store.listeners.push(listener);
     },
     async onChangeRoomState() {
       console.log("onChangeRoomState");
+      //新規バトルに進む
       if (this.now != this.room.now) {
+        this.calcResults();
         this.now = this.room.now;
         this.$nextTick(() => {
           console.log("go animation");
@@ -742,7 +830,7 @@ export default {
               time: this.room.now,
               room: this.roomId,
               owner: this.store.user.uid,
-              ownerName: this.store.user.displayName,
+              ownerName: this.store.user.displayName || "名無し",
               ownerHand: result.owner,
               uid: key,
               userName: result.userName,
@@ -769,7 +857,7 @@ export default {
               time: this.room.now,
               room: this.roomId,
               owner: this.store.user.uid,
-              ownerName: this.store.user.displayName,
+              ownerName: this.store.user.displayName || "名無し",
               ownerHand: this.getOwnerHand(),
               uid: key,
               userName: result.userName,

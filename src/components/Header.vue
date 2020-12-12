@@ -4,7 +4,7 @@
     <v-toolbar-title :style="$vuetify.breakpoint.smAndDown ? {fontSize: '14px'} : {fontSize: '18px'}">
       <Fa :icon="faHandPeace" fw size="2x" class="secondary--text hidden-xs-only"/>
       <router-link to="/">
-        <h2 class="white--text d-inline-block">{{ msg }}</h2>
+        <h2 class="white--text d-inline-block pl-2 pl-sm-0">{{ msg }}</h2>
       </router-link>
       <Fa :icon="faHandPeace" fw size="2x" class="secondary--text hidden-xs-only"/>
     </v-toolbar-title>
