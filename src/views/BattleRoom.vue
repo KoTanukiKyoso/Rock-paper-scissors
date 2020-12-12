@@ -123,10 +123,51 @@
 
       <!--チャット 結果-->
       <v-row class="mt-3">
+        <!--表示-->
+        <v-col cols="12" class="col-lg-3 pt-1 px-1">
+          <v-card class="mx-5 mx-auto" elevation="4">
+            <v-card-title class="font-weight-bold pb-1 pt-1">待機表示
+              <v-card-subtitle class="py-0">第{{ room.now }}回</v-card-subtitle>
+            </v-card-title>
+            <v-divider/>
+            <div style="max-height: 500px; min-height: 50px; overflow-y: auto;">
+              <v-container>
+                <v-row class="px-0">
+                  <v-col cols="12" class="col-sm-6 col-md-6 col-lg-12 ma-0 pa-1">
+                    <v-card class="px-1">
+                      <template v-if="getOwnerHand()">
+                        <span class="success--text">●</span>親<br>
+                        <small class="pl-2 grey--text">選択済み</small>
+                      </template>
+                      <template v-else>
+                        <span class="error--text">●</span>親<br>
+                        <small class="pl-2 grey--text">選択中...</small>
+                      </template>
+                    </v-card>
+                  </v-col>
+                  <v-col v-for="(child, i) of room.children" :key="i" cols="12"
+                         class="col-sm-6 col-md-6 col-lg-12 ma-0 pa-1">
+                    <v-card class="px-1">
+                      <template v-if="getResults()[child] && getResults()[child].hand">
+                        <span class="success--text">●</span>{{ child }}<br>
+                        <small class="pl-2 grey--text">選択済み</small>
+                      </template>
+                      <template v-else>
+                        <span class="error--text">●</span>{{ child }}<br>
+                        <small class="pl-2 grey--text">選択中...</small>
+                      </template>
+                    </v-card>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </div>
+          </v-card>
+        </v-col>
+
         <!--じゃんけん結果-->
-        <v-col cols="12" class="col-md-6">
+        <v-col cols="12" class="col-sm-6 col-lg-4 pt-1 px-1">
           <v-card class="mx-5 mx-auto" style="min-height: 300px;" elevation="4">
-            <v-card-title class="font-weight-bold pb-1">じゃんけん結果</v-card-title>
+            <v-card-title class="font-weight-bold pb-1 pt-1">じゃんけん結果</v-card-title>
             <v-divider/>
             <div class="px-1 pb-2 pt-0 grey lighten-3" style="max-height: 500px; min-height: 300px; overflow-y: auto;">
               <v-card v-for="result of results" :key="result.key" class="pt-1 mt-1">
@@ -159,9 +200,9 @@
         </v-col>
 
         <!--チャット-->
-        <v-col cols="12" class="col-md-6">
+        <v-col cols="12" class="col-sm-6 col-lg-5 pt-1 px-1">
           <v-card class="mx-5 mx-auto" style="min-height: 300px;" elevation="4">
-            <v-card-title class="font-weight-bold pb-1">チャット</v-card-title>
+            <v-card-title class="font-weight-bold pb-1 pt-1">チャット</v-card-title>
             <v-divider/>
             <div id="chatContainer" class="pa-1 pt-0 grey lighten-3" style="height: 300px; overflow-y: auto;">
               <v-card v-for="message of messages" :key="message.key" class="pt-1 mt-1">
@@ -419,7 +460,15 @@ export default {
       }
     },
     isEndGame() {
-
+      if (!this.room || !this.room.children) {
+        return false;
+      }
+      for (let child of this.room.children) {
+        if (!this.getResults()[child] || !this.getResults()[child].hand) {
+          return false;
+        }
+      }
+      return true;
     },
     getResults() {
       if (!this.room.results[this.room.now]) {
@@ -434,7 +483,11 @@ export default {
       return this.getResults()[this.store.user.uid];
     },
     getOwnerHand() {
-      return this.getResults()[this.room.owner].hand;
+      let results = this.getResults();
+      if (!results || !results[this.room.owner]) {
+        return false;
+      }
+      return results[this.room.owner].hand;
     },
     GetURLGet() {
       let url = location.href;
@@ -740,6 +793,30 @@ export default {
       if (!this.isOwner) {
         return;
       }
+
+      if (!this.isEndGame()) {
+        let rr = await this.$swal(
+            {
+              title: "本当に次のじゃんけんに進みますか？",
+              html: "まだ手を選んでいないユーザがいます．",
+              icon: "question",//"success", "error", "warning", "info" or "question"
+              showCancelButton: true,
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#d33',
+              confirmButtonText: "進む"
+            }
+        ).then((result) => {
+          if (result.value) {
+            return true;
+          } else {
+            return false;
+          }
+        });
+        if (!rr) {
+          return;
+        }
+      }
+
       await this.saveResult();
 
       let res = await this.db.doc('rooms/' + this.roomId).update({
@@ -799,7 +876,7 @@ export default {
       let rr = await this.$swal(
           {
             title: "本当に部屋を解散しますか？",
-            html: "参加者，チャットデータは全て削除されます．過去の対戦結果は削除されません．",
+            html: "参加者，チャットデータは全て削除されます．対戦結果は保存されます．",
             icon: "question",//"success", "error", "warning", "info" or "question"
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
