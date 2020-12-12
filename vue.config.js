@@ -1,4 +1,5 @@
 module.exports = {
+  publicPath: 'https://kodanuki.work/janken/',
   "pluginOptions": {
     "style-resources-loader": {
       "preProcessor": "sass",
