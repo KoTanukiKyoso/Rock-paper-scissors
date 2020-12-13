@@ -126,7 +126,7 @@
 
 
 @media screen and (max-width: 400px) {
-  .v-toolbar__content{
+  .v-toolbar__content {
     padding-left: 6px;
     padding-right: 6px;
   }
@@ -144,7 +144,7 @@
       <Footer/>
     </div>
 
-    <myAlert />
+    <myAlert/>
   </v-app>
 </template>
 
@@ -166,6 +166,37 @@ export default {
     messages: []
     //
   }),
-  methods: {}
+  methods: {
+    createPageTitle: function (to) {
+      // タイトルを設定
+      if (to.meta.title) {
+        let setTitle = to.meta.title;
+        document.title = setTitle;
+      } else {
+        document.title = 'じゃんけん Online'
+      }
+
+      if (!document.querySelector("meta[name='description']")) {
+        return;
+      }
+      // メタタグdescription設定
+      if (to.meta.desc) {
+        let setDesc = to.meta.desc;
+        document.querySelector("meta[name='description']").setAttribute('content', setDesc)
+      } else {
+        document.querySelector("meta[name='description']").setAttribute('content',
+            'コロナ渦なのに まだ対面でじゃんけんしてるんですか？テレビ会議でじゃんけんできてますか？？多数決なんてもう古い！これからはじゃんけんの時代！！全てはじゃんけんできましょう！！！')
+      }
+    }
+  },
+  mounted: function () {
+    let to = this.$route;
+    this.createPageTitle(to);
+  },
+  watch: {
+    '$route'(to) {
+      this.createPageTitle(to);
+    }
+  }
 };
 </script>

@@ -29,6 +29,11 @@
           </span>
         </div>
         <v-spacer></v-spacer>
+        <v-btn @click="shareOnTwitter" v-if="room.recruitment &&  room.children.length < room.numOfChildren"
+               rounded style="background: #1DA1F2;" class="white--text">
+          <v-icon>fab fa-twitter</v-icon>
+          募集
+        </v-btn>
         <div v-if="room.now" class="d-inline-block pr-2">
           <template v-if="room.now > room.numOfBattle">
             <span class="font-weight-bold primary--text">全じゃんけん終了</span>
@@ -178,10 +183,9 @@
             <v-card-title class="font-weight-bold pb-1 pt-1">
               じゃんけん結果
               <v-spacer></v-spacer>
-              <small class="font-weight-regular">{{ myResultOfNow.win }}勝,{{
-                  myResultOfNow.lose
-                }}敗,{{ myResultOfNow.aiko }}分
-                /{{ (room.now - 1) > 0 ? room.now - 1 : 0 }}回</small>
+              <small class="font-weight-regular">
+                {{ myResultOfNow.win }}勝 {{ myResultOfNow.lose }}敗 {{ myResultOfNow.aiko }}分
+                /{{ myResultOfNow.num }}回</small>
             </v-card-title>
             <v-divider/>
             <div class="px-1 pb-2 pt-0 grey lighten-3" style="max-height: 500px; min-height: 100px; overflow-y: auto;">
@@ -293,6 +297,14 @@ export default {
     Fa
   },
   data: () => ({
+    twitter_: {
+      href: "https://twitter.com/share?ref_src=twsrc%5Etfw",
+      text: "",
+      url: "",
+      hashtag: "じゃんけんOnline",
+      user: "nexs_jp",
+      lang: "ja"
+    },
     now: 0,
     hands: {
       rock: {
@@ -451,6 +463,25 @@ export default {
       const ss = `0${date.getSeconds()}`.slice(-2);
       return `${yyyy}/${MM}/${dd} ${HH}:${mm}:${ss}`;
     },
+    setTwitter() {
+      console.log("setTwitter");
+      this.twitter_.text = `- じゃんけん Online -
+${this.store.user.displayName || "名無し"} さんが対戦相手を募集してます！！
+【${this.room.roomName}】
+${this.room.roomSummary || ""}
+#じゃんけんOnline
+
+`;
+      this.twitter_.url = location.href;
+    },
+    shareOnTwitter() {
+      window.open("https://twitter.com/share?url=" + encodeURIComponent(this.twitter_.url) +
+          "&text=" + encodeURIComponent(this.twitter_.text) +
+          "&lang=" + encodeURIComponent(this.twitter_.lang) +
+          "&hashtags" + encodeURIComponent(this.twitter_.hashtag) +
+          "&related=" + encodeURIComponent(this.twitter_.href),
+          '', '');
+    },
     calcWinner(result) {
       return this.calcResult(result.ownerHand, result.userHand);
     },
@@ -500,7 +531,6 @@ export default {
     },
     calcResults() {
       console.log("calcResults");
-      console.log(this.results);
       let win = 0;
       let lose = 0;
       let aiko = 0;
@@ -628,6 +658,7 @@ export default {
             self.room = doc.data();
             if (self.onetime) {
               self.onetime = false;
+              self.setTwitter();
               self.checkRoom();
             }
             self.onChangeRoomState();

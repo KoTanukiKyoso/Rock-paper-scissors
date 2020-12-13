@@ -8,6 +8,12 @@ module.exports = {
       ]
     }
   },
+  pages: {
+    index: {
+      entry: 'src/main.js',
+      title: 'じゃんけん Online',
+    }
+  },
   "transpileDependencies": [
     "vuetify"
   ]
